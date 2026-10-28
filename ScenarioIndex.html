@@ -1080,20 +1080,21 @@
   <div class="moon-backdrop" aria-hidden="true"><div class="moon-backdrop__img"></div></div>
   <header class="topbar">
     <div class="brand-wrap">
-      <div class="brand-badge">ECLIPSE 2.0</div>
+      <div class="brand-badge">ECLIPSE<span>2.0</span></div>
       <div class="brand-copy">
         <div class="kicker">Collaborative lunar systems engineering</div>
         <div class="title">Digital Engineering Ecosystem</div>
       </div>
     </div>
     <nav class="nav">
-      <a href="#MBSE">1. Build Requirements</a>
-      <a href="#activation">2. Mission Network Activation</a>
-      <a href="#assembly">3. Model Submission</a>
-      <a href="#urban-planning">4. Urban Planning</a>
-      <a href="#des">5. Mission Tradespace Selection (DES)</a>
-      <a href="#consquence">6. Simulator</a>
+      <a href="#MBSE" title="Build Requirements"><span class="nav-num">1</span>Requirements</a>
+      <a href="#activation" title="Mission Network Activation"><span class="nav-num">2</span>Network Activation</a>
+      <a href="#assembly" title="Model Submission"><span class="nav-num">3</span>Model Submission</a>
+      <a href="#urban-planning" title="Urban Planning"><span class="nav-num">4</span>Urban Planning</a>
+      <a href="#des" title="Mission Tradespace Selection (DES)"><span class="nav-num">5</span>Tradespace (DES)</a>
+      <a href="#consquence" title="Simulator"><span class="nav-num">6</span>Simulator</a>
     </nav>
+    <span class="topbar-progress" aria-hidden="true"></span>
   </header>
   <div class="shell">
 
@@ -1245,6 +1246,136 @@
 
 .intro-credit a { color: inherit; }
 
+/* ── Top bar: single-row glass bar over the moon ──
+   `body > header.topbar` outweighs the later `.topbar` / `.nav a` rules of the embedded S24 page. */
+body > header.topbar {
+  top: 14px;
+  width: calc(100% - 40px);
+  max-width: 1540px;
+  gap: 22px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 22px;
+  border: 1px solid rgba(160, 204, 255, 0.16);
+  background: rgba(6, 14, 26, 0.5);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: top 300ms ease, background 300ms ease, box-shadow 300ms ease;
+}
+
+body > header.topbar.is-scrolled {
+  top: 8px;
+  background: rgba(6, 14, 26, 0.86);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body > header.topbar .brand-wrap { gap: 14px; flex-shrink: 0; }
+
+body > header.topbar .brand-badge {
+  min-width: 0;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 22px;
+  letter-spacing: 2.4px;
+  color: #e9f2ff;
+  background: linear-gradient(180deg, rgba(31, 53, 82, 0.7), rgba(11, 25, 44, 0.7));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+body > header.topbar .brand-badge span { color: var(--team-gold); margin-left: 0.35em; }
+
+/* the hero already carries the subtitle; the bar keeps only the logo */
+body > header.topbar .brand-copy { display: none; }
+
+body > header.topbar .nav {
+  margin-left: auto;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 16px;
+  border: 1px solid rgba(160, 204, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body > header.topbar .nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(233, 242, 255, 0.72);
+  white-space: nowrap;
+  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+body > header.topbar .nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: transparent;
+  transform: none;
+}
+
+body > header.topbar .nav-num {
+  display: inline-grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 1px solid rgba(154, 215, 255, 0.35);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ice);
+  transition: inherit;
+}
+
+/* highlight the section currently in view (set by the scroll-spy script) */
+body > header.topbar .nav a.is-active {
+  color: #09111e;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(255, 223, 103, 0.98), rgba(255, 196, 32, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 18px rgba(255, 205, 70, 0.3);
+}
+
+body > header.topbar .nav a.is-active .nav-num {
+  color: #09111e;
+  border-color: rgba(9, 17, 30, 0.35);
+  background: rgba(9, 17, 30, 0.1);
+}
+
+/* reading progress line along the bottom edge of the bar */
+.topbar-progress {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--team-blue), var(--team-gold));
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* tabs scroll sideways rather than overflow the bar when space runs out */
+body > header.topbar .nav {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+body > header.topbar .nav::-webkit-scrollbar { display: none; }
+
+@media (max-width: 1399px) {
+  body > header.topbar .nav { gap: 2px; }
+  body > header.topbar .nav a { padding: 9px 12px 9px 9px; font-size: 14px; gap: 8px; }
+}
+
 @media (max-width: 760px) {
   .intro-btn { min-width: 0; width: 100%; font-size: 14px; }
   .intro-credit { position: static; margin-top: 24px; }
@@ -1281,6 +1412,52 @@
     new IntersectionObserver(([entry]) => {
       backdrop.classList.toggle('is-dimmed', entry.intersectionRatio < 0.35);
     }, { threshold: [0, 0.35, 1] }).observe(hero);
+  })();
+
+  // Scroll-spy: colour the top-nav link of the section currently under the topbar.
+  (function () {
+    const links = Array.from(document.querySelectorAll('.topbar .nav a[href^="#"]'));
+    if (!links.length) return;
+    const topbar = document.querySelector('.topbar');
+    const nav = topbar.querySelector('.nav');
+    const progress = document.querySelector('.topbar-progress');
+    let ticking = false;
+
+    function update() {
+      ticking = false;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      topbar.classList.toggle('is-scrolled', window.scrollY > 40);
+      if (progress) progress.style.transform = `scaleX(${maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0})`;
+      const offset = topbar.getBoundingClientRect().bottom + 24;
+      let current = null;
+      links.forEach(link => {
+        const section = document.getElementById(link.getAttribute('href').slice(1));
+        if (!section || !section.getClientRects().length) return; // missing or hidden
+        if (section.getBoundingClientRect().top <= offset) current = link;
+      });
+      // At the very bottom, the last section may never reach the topbar: force it.
+      if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 2) {
+        current = links[links.length - 1];
+      }
+      links.forEach(link => {
+        const isActive = link === current;
+        // Keep the active tab visible when the nav scrolls horizontally on narrow screens
+        // (scrollLeft rather than scrollIntoView, which would interrupt the page's smooth scroll).
+        if (isActive && !link.classList.contains('is-active') && nav.scrollWidth > nav.clientWidth) {
+          nav.scrollLeft = link.offsetLeft - (nav.clientWidth - link.offsetWidth) / 2;
+        }
+        link.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function onScroll() {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    window.addEventListener('load', update);
+    update();
   })();
 </script>
 
