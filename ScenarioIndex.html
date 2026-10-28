@@ -1077,6 +1077,7 @@
 </style>
 </head>
 <body>
+  <div class="moon-backdrop" aria-hidden="true"><div class="moon-backdrop__img"></div></div>
   <header class="topbar">
     <div class="brand-wrap">
       <div class="brand-badge">ECLIPSE 2.0</div>
@@ -1096,44 +1097,192 @@
   </header>
   <div class="shell">
 
-<head>
-
 <style>
+/* ── Lunar backdrop (Artemis II photo, NASA art002e009287) ── */
+.moon-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #000;
+  pointer-events: none;
+}
+
+.moon-backdrop__img {
+  position: absolute;
+  inset: 0;
+  background: url("docs/assets/moon_artemis2.jpg") center 30% / cover no-repeat;
+  transform-origin: 50% 100%;
+  animation: moonRise 3.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: opacity 600ms ease, filter 600ms ease;
+}
+
+/* readability veil: light over the hero, heavier once the user scrolls into the tools */
+.moon-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(2, 6, 14, 0.55), transparent 60%),
+    linear-gradient(180deg, rgba(2, 6, 14, 0.05) 0%, rgba(2, 6, 14, 0.35) 70%, rgba(2, 6, 14, 0.7) 100%);
+  transition: background-color 600ms ease;
+}
+
+.moon-backdrop.is-dimmed .moon-backdrop__img { opacity: 0.55; filter: blur(2px) saturate(0.85); }
+.moon-backdrop.is-dimmed::after { background-color: rgba(3, 9, 18, 0.45); }
+
+@keyframes moonRise {
+  0%   { opacity: 0; transform: translateY(45vh) scale(1.25); filter: brightness(0.2); }
+  35%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes uiFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes introRise {
+  from { opacity: 0; transform: translateY(24px); letter-spacing: 0.5em; }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.topbar { animation: uiFadeIn 900ms ease 1.6s backwards; }
+.shell > *:not(.intro-header) { animation: uiFadeIn 900ms ease 2s backwards; }
+
+/* ── Hero ── */
 .intro-header {
-  position: relative;
-  height: 100vh;
-  width: 100%;
-
-  background-image: url("https://raw.githubusercontent.com/abrunier3/ECLIPSE_2.0/main/clean_database/LDEM_Image.jpeg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  display: flex;
+  min-height: calc(100vh - 90px);
+  margin-top: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  padding: 40px 20px 9vh;
+  text-align: center;
 }
 
-/* dark overlay so text/button is readable */
-.intro-header::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(5,10,25,.55);
+.intro-header::before { display: none; }
+
+.intro-copy { position: relative; z-index: 1; }
+
+.intro-kicker {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--ice);
+  animation: introRise 1s ease 1.3s backwards;
 }
 
-.intro-cta{
-  position:relative;
-  z-index:2;
+.intro-title {
+  margin: 14px 0 10px;
+  font-family: var(--display);
+  font-size: clamp(44px, 9vw, 112px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #f4f8ff;
+  text-shadow: 0 0 40px rgba(154, 215, 255, 0.35), 0 6px 30px rgba(0, 0, 0, 0.8);
+  animation: introRise 1.4s cubic-bezier(0.16, 1, 0.3, 1) 1.5s backwards;
 }
-</head>
-</Style>
+
+.intro-title span { color: var(--team-gold); }
+
+.intro-sub {
+  font-size: clamp(15px, 1.6vw, 19px);
+  color: var(--muted-2);
+  max-width: 620px;
+  margin: 0 auto;
+  animation: introRise 1s ease 1.8s backwards;
+}
+
+.intro-cta { padding-top: 36px; animation: introRise 1s ease 2.1s backwards; }
+
+.intro-scroll {
+  display: block;
+  margin: 34px auto 0;
+  width: 22px;
+  height: 36px;
+  border: 1.5px solid rgba(233, 242, 255, 0.5);
+  border-radius: 12px;
+  position: relative;
+  animation: uiFadeIn 1s ease 2.6s backwards;
+}
+
+.intro-scroll::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 3px;
+  height: 7px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: rgba(233, 242, 255, 0.8);
+  animation: scrollHint 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollHint {
+  0%   { transform: translateY(0); opacity: 1; }
+  70%  { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+
+.intro-credit {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(233, 242, 255, 0.45);
+  letter-spacing: 0.5px;
+}
+
+.intro-credit a { color: inherit; }
+
+@media (max-width: 760px) {
+  .intro-btn { min-width: 0; width: 100%; font-size: 14px; }
+  .intro-credit { position: static; margin-top: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moon-backdrop__img,
+  .topbar,
+  .shell > *,
+  .intro-kicker, .intro-title, .intro-sub, .intro-cta, .intro-scroll,
+  .intro-scroll::after { animation: none !important; }
+}
+</style>
 
     <section class="intro-header" id="top">
-      <div class="intro-cta">
-        <button class="intro-btn" onclick="document.getElementById('scenario-entry').scrollIntoView({behavior:'smooth'})">Start building your mission now</button>
+      <div class="intro-copy">
+        <div class="intro-kicker">Collaborative lunar systems engineering</div>
+        <h1 class="intro-title">ECLIPSE <span>2.0</span></h1>
+        <p class="intro-sub">Digital Engineering Ecosystem — from requirements to mission simulation on the lunar surface.</p>
+        <div class="intro-cta">
+          <button class="intro-btn" onclick="document.getElementById('scenario-entry').scrollIntoView({behavior:'smooth'})">Start building your mission now</button>
+        </div>
+        <span class="intro-scroll" aria-hidden="true"></span>
       </div>
+      <div class="intro-credit">Photo: <a href="https://www.nasa.gov/image-detail/amf-art002e009287/" target="_blank" rel="noopener">NASA / Artemis II crew</a></div>
     </section>
+
+<script>
+  // Dim the lunar backdrop once the user scrolls past the hero so panels stay readable.
+  (function () {
+    const backdrop = document.querySelector('.moon-backdrop');
+    const hero = document.getElementById('top');
+    if (!backdrop || !hero || !('IntersectionObserver' in window)) return;
+    new IntersectionObserver(([entry]) => {
+      backdrop.classList.toggle('is-dimmed', entry.intersectionRatio < 0.35);
+    }, { threshold: [0, 0.35, 1] }).observe(hero);
+  })();
+</script>
 
 
 
