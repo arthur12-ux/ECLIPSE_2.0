@@ -1,0 +1,241 @@
+Model Representation:
+  - Conceptual Model Representation:
+    - Conceptual Model Representation Types:
+      - Each Conceptual Model:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Simulation Methods: #(Specify all that apply)
+          - Data-Driven
+          - Deterministic
+          - Empirical
+          - Logical
+          - Optimization
+          - Probabilistic
+          - Relativistic
+          - Reduced Order
+          - Response Surfaces
+          - Stochastic
+          - Other #"specification of Simulation Methods"
+        - Simulation Controls: #(Specify all that apply)
+          - Not Applicable
+          - Convergence Criteria #"specification of Convergence Criteria"
+          - Integration Control #"specification of Integration Control"
+          - Load Step Strategies #"specification of Load Step Strategies"
+          - Objective Functions #"specification of Objective Functions"
+          - Simulation Constraints #"specification of Simulation Constraints"
+          - Time Step Strategies #"specification of Time Step Strategies"
+          - Other #"specification of Simulation Controls"
+        - Coupling Modes: #(Specify all that apply)
+          - Not Applicable
+          - Co-simulation
+          - Fully Coupled
+          - Loosely Coupled
+          - Other #"specification of Coupling Modes"
+        - Communication Mode: #(Specify one)
+          - Not Applicable
+          - Asynchronous
+          - Synchronous
+          - Other #"specification of Communication Mode(s)"
+        - Physics Domains: #(Specify all that apply)
+          - Not Applicable
+          - Acoustics
+          - Chemistry
+          - Control
+          - Electromagnetics (CEM) - low frequency
+          - Electromagnetics (CEM) - high frequency
+          - Electronics
+          - Optics
+          - Multiphysics
+          - None
+          - Fluids (CFD) - Compressible
+          - Fluids (CFD) - Incompressible
+          - Particle physics
+          - Photonics
+          - Quantum Mechanics
+          - Signal Network
+          - Structures
+          - Thermal
+          - Thermodynamics
+          - Vibration
+          - Other #"specification of Physics Domain(s)”
+        - Mathematical Forms: #(Specify all that apply)
+          - Not Applicable
+          - Adiabatic
+          - Arbitrary Eulerian-Lagrangian
+          - Discontinuous Galerkin
+          - Eulerian
+          - Heuristic
+          - Isothermal
+          - Lagrangian
+          - Lattice Boltzmann
+          - Navier Stokes
+          - None
+          - Particle Methods
+          - Plane Stress
+          - Plane Strain
+          - Smooth Particle Hydrodynamics (SPH)
+          - Substructure
+          - Superelement
+          - Statistical
+          - Other #"specification of Mathematical Form(s) used"
+        - Model Forms: #(Specify all that apply)
+          - AI or ML Model
+          - DOE
+          - Equations
+          - Excel Spreadsheet
+          - Finite Difference
+          - Finite Element (h)
+          - Finite Element (IGA)
+          - Finite Element (p)
+          - Finite Element (reduced order basis)
+          - Finite Element (Spectral)
+          - Finite Volume
+          - Functional Mockup Unit (FMU)
+          - Generative Design (SIMP)
+          - Generative Design (Level Set)
+          - Generative Design (Implicit)
+          - Generative Design (other)
+          - Method of Moments
+          - Optimization
+          - Preprocessing
+          - Process/Activity Model
+          - Reduced Order Model
+          - Response Surface
+          - Substructure
+          - Superelement
+          - System simulation
+          - Other #"specification of Model Form(s) used"
+        - Geometric Forms: #(Specify all that apply)
+          - Explicit
+          - Geometry Independent
+          - Implicit
+          - Other #"specification of Geometric Form(s) used"
+        - Time Fidelity: #(Specify all that apply)
+          - Not Applicable
+          - Frequency domain
+          - Frequency spectrum
+          - Multiple
+          - Quasi-static
+          - Static
+          - Steady-state
+          - Transient
+          - Transient spectrum
+          - Other #"specification of Time Fidelity used"
+        - Time Scales: #(Specify all that apply)
+          - Not Applicable
+          - Years
+          - Days
+          - Hours
+          - Minutes
+          - Seconds
+          - Microseconds
+          - Milliseconds
+          - Nanoseconds
+          - Real-Time
+          - Other #"specification of Time Scale(s) used" 
+        - Behavior Fidelity: #(Specify all that apply)
+          - Not Applicable
+          - Acausal
+          - Causal
+          - Linear
+          - Nonlinear
+          - Probabilistic
+          - Random
+          - Relativistic
+          - Quasi-linear
+          - Other #“specification of Behavior Fidelity used”
+        - Dimensionality of Geometry: #(Specify all that apply)
+          - Not Applicable
+          - 0D
+          - 1D
+          - 2D
+          - 3D
+          - 4D (3D that varies with time)
+          - Other #“specification of Dimensionality of Geometry“
+        - Dimensionality of Discretization: #(Specify all that apply)
+          - Not Applicable
+          - 0D
+          - 1D
+          - 2D
+          - 3D
+          - 4D (3D that varies with time)
+          - Other #“specification of Dimensionality of Discretization“
+        - Dimensionality of Material Representation: #(Specify all that apply)
+          - Not Applicable
+          - 0D
+          - 1D
+          - 2D
+          - 3D
+          - 4D (3D that varies with time)
+          - Other #“specification of Dimensionality of Material Representation“
+        - Model Scales: #(Specify all that apply)
+          - Not Applicable
+          - Macroscale
+          - Microscale
+          - Nanoscale
+          - Scale Independent
+          - Other #“specification of applicable Model Scale(s)“
+        - Material Representations: #(Specify all that apply)
+          - Not Applicable
+          - Anisotropic
+          - Elastic
+          - Elasto-Plastic
+          - Hyperelastic
+          - Isotropic
+          - Load dependent
+          - Orientation independent
+          - Orthotropic
+          - Temperature dependent
+          - Time dependent
+          - Viscoelastic
+          - Viscoplastic
+          - Other #“specification of Material Representation(s) used”
+        - Abstraction Level: #(Specify one)
+          - Not Applicable
+          - Architectural
+          - Behavioral
+          - Functional
+          - Other #“specification of Abstraction Level”
+        - Other Conceptual Attributes: #(Specify one)
+          - Not Applicable
+          - Other #“specification of Other Conceptual Attribute(s)”
+  - Executable Model Representation:
+    - Executable Model Representation Types:
+      - Each Executable Model, including submodels:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Model Type: #(Specify one)
+          - Dynamic Library Script
+          - Executable Static Library
+          - FMI v2.x-3.x
+          - Process/Activity
+          - Other #“specification of the applicable Model Type”
+        - Modeling Language: #(Specify one)
+          - Other #“specification of Modeling Language”
+        - Modeling Language Version: #(Specify one)
+          - Other #“specification of the applicable Modeling Language version”
+    - Executable Model Interoperability:
+      - Each Executable Model, including submodels:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Interoperability Capability & Assumptions: #(Specify one)
+          - Not Applicable
+          - Other #“specification of the applicable Interoperability Capability & Assumptions”
+    - Executable Model Hierarchy:
+      - Each Executable Model:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Submodels Used: #(Specify one)
+          - Not Applicable
+          - Other #“specification of the applicable submodels for this Executable Model”
+        - Submodel for: #(Specify one)
+          - Not Applicable
+          - Other #“specification of the applicable models that use this Executable Model”

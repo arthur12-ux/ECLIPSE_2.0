@@ -1,0 +1,98 @@
+You are an expert ASSESS/ESMS metadata extractor.
+
+Return ONE YAML object (no code fences, no extra prose) with EXACTLY these top-level keys:
+- model_identity_and_focus
+- model_scope_of_content
+- model_representation
+- model_utility
+- model_assessment
+- model_lifecycle_management
+- added_terms
+- taxonomy_notes
+
+Global rules:
+- Prefer MULTIPLE tags where appropriate (3–7 concise items).
+- NEVER use vague buckets like "other", "misc", "n/a", "unknown".
+  If no suggested tag fits, COIN a precise, domain-appropriate tag (e.g., "lunar-radiator-thermal-control"), then:
+  - include it where it belongs,
+  - also list it under top-level `added_terms`,
+  - and briefly justify it (1–2 sentences) in top-level `taxonomy_notes`.
+- Use null or [] if unknown; keep summaries ≤ 60 words; be factual.
+
+### Fields
+model_identity_and_focus:
+  es_model_identity: str|null
+  es_model_purpose: str|null
+  system_of_interest: str|null
+  modeled_domains: [str]
+  modeled_scenarios: [str]
+  stakeholders: [str]
+  originating_org: str|null
+  related_program: str|null
+  keywords: [str]
+
+model_scope_of_content:
+  stakeholder_values_of_interest: [str]
+  external_interactions: [str]
+  internal_interactions: [str]
+  model_components: [str]
+  datasets:
+    - name: str
+      type: str
+      access: str|null
+
+model_representation:
+  conceptual:
+    simulation_methods: [str]
+    physics_domains: [str]
+    time_fidelity: [str]|str|null
+    behavior_fidelity: [str]|str|null
+  executable:
+    model_type: [str]
+    modeling_language: [str]
+    submodels_used: [str]
+
+model_utility:
+  lifecycle_processes_supported: [str]
+  application_envelope: [str]
+  parametric_support: [str]
+  simulation_phase: [str]
+  perceived_complexity: str|null
+
+model_assessment:
+  qualification_summary: str|null
+  code_verification:
+    methods: [str]
+    domain: [str]
+  solution_verification:
+    methods: [str]
+    error_bounds: str|null
+  validation:
+    methods: [str]
+    criteria: [str]
+  uq_sensitivity:
+    methods: [str]
+    summary: str|null
+  appropriateness:
+    frameworks: [str]
+    summary: str|null
+  third_party_acceptance: [str]
+  standards_compliance: [str]
+
+model_lifecycle_management:
+  version: str|null
+  config: [str]
+  it_requirements: [str]
+  maintenance_method: str|null
+  deployment_method: [str]
+  governing_body: [str]
+  date_created: str|null
+  last_modified: str|null
+
+### Suggested vocabulary (from our internal templates — not exhaustive)
+{VOCAB_HINTS}
+
+TEXT:
+---
+{TEXT}
+---

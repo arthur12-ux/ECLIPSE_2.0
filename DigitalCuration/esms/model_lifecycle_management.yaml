@@ -1,0 +1,217 @@
+Model Lifecycle Management:
+  - Model Versioning and Configuration Management:
+    - Configuration Management Types:
+      - Each type of Version and Configuration Management:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Impacted Stakeholder Types: #(Specify all that apply)
+          - Not Applicable
+          - Access Control Management
+          - All
+          - Engineering Department
+          - Engineering Department Management
+          - ES Model Developer
+          - ES Model Operator
+          - ES Model Owner
+          - External Authorities
+          - IT Department
+          - Model Reviewers
+          - None
+          - Quality Department
+          - Physical Test Department
+          - Support Department
+          - Other # “specification of Impacted Stakeholder Type(s)"
+        - Impacted User Groups: #(Specify all that apply)
+          - All
+          - None
+          - Other # "specification of Impacted User Groups"
+    - Current Version and Configuration:
+      - Each Deployment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Current Version: #(Specify one)
+          - Not Applicable
+          - Other # "specification of the Current Version of this ES Model"
+        - Current Configuration: #(Specify one)
+          - Not Applicable
+          - Other # "specification of the Current Configuration of this ES Model"
+        - Impacted Stakeholder Types: #(Specify all that apply) 
+          - Not Applicable
+          - Access Control Management
+          - All
+          - Engineering Department
+          - Engineering Department Management
+          - ES Model Developer
+          - ES Model Operator
+          - ES Model Owner
+          - External Authorities
+          - IT Department
+          - Model Reviewers
+          - None
+          - Quality Department
+          - Physical Test Department
+          - Support Department
+          - Other #"specification of Impacted Stakeholder Type(s)  
+        - Impacted User Groups: #(Specify all that apply)  
+          - All
+          - None
+          - Other #"specification of Impacted User Groups" 
+        - Authors: #(Specify all that apply)  
+          - Not Applicable
+          - Other #"specification of each Version & Configuration Author" 
+        - Authoring Organizations: #(Specify all that apply)  
+          - Not Applicable
+          - Other #"specification of each Version & Configuration Authoring Organization" 
+        - Last Modified Date: #(Specify one)  
+        - Other #"specification of the date of the last modification of this version & configuration" 
+        - Approved By: #(Specify all that apply)  
+          - Not Applicable
+          - Other #"specification of the ES Model approver(s) of this version & configuration" 
+        - Approval Date: #(Specify one)  
+          - Other #"specification of the date of approval of this version & configuration" 
+        - Copyright Ownership: #(Specify all that apply)  
+          - Not Applicable
+          - Other #"specification of copyright ownership of this version & configuration" 
+        - Model Dependencies: #(Specify all that apply)
+          - Not Applicable
+          - Other #"specification of model dependencies of this version & configuration"
+  - Model IT Environmental Compatibility:
+    - Model IT Requirements:
+      - Each type of IT Environment or Standard:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+  - Model Design Life:
+    - ES Model Design Life:
+      - Each deployment method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Model Planned Design Life: #(Specify one)
+          - Other #"specification of the Model Planned Design Life"
+        - Planned First Availability: #(Specify one)
+          - Other #"specification of the Planned First Availability"
+        - Actual First Availability: #(Specify one)
+          - Other #"specification of Actual First Availability date"
+        - Risk to Planned First Availability: #(Specify all that apply)
+          - Not Applicable
+          - Other #" description of the Risks to Planned First Availability"
+        - Planned Retirement Date: #(Specify one)
+          - Not Applicable
+          - Other #"specification the Planned Retirement date"
+        - Actual Retirement Date: #(Specify one)
+          - Not Applicable
+          - Other #"specification the Actual Retirement date"
+        - Retirement status: #(Specify one)
+          - Not Applicable
+          - Active
+          - Retired
+  - Model Maintainability:
+    - Maintenance Method:
+      - Each Maintenance Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+      - Maintenance Status: #(Specify one) 
+        - Maintained
+        - Not-Maintained
+      - Maintenance Life Estimate: #(Specify one) 
+        - Other #"specification of the Maintenance Life Estimate" 
+      - Impacted deployment methods: #(Specify one) 
+        - Other #"specification of the Impacted Deployment Methods" 
+      - Impacted Stakeholder Types: #(Specify all that apply) 
+        - Not Applicable
+        - Access Control Management
+        - All
+        - Engineering Department
+        - Engineering Department Management
+        - ES Model Developer
+        - ES Model Operator
+        - ES Model Owner
+        - External Authorities
+        - IT Department
+        - Model Reviewers
+        - None
+        - Quality Department
+        - Physical Test Department
+        - Support Department
+        - Other; “specification of Impacted Stakeholder Type(s)
+      - Impacted User Groups: #(Specify all that apply) 
+        - All
+        - None
+        - Other #"specification of Impacted User Groups" 
+  - Model Deployability:
+    - Deployment Method:
+      - Each Deployment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+      - Deployment status: #(Specify one)
+        - Not Applicable
+        - Deployed
+        - Not Deployed
+      - Deployment Life Estimate: #(Specify one)
+        - Not Applicable
+        - Other #"specification of the Deployment Life Estimate"
+      - Model Access or Retrieval Method: #(Specify one)
+        - Not Applicable
+        - Other #"specification of the Model Access or Retrieval Method"
+    - Model Long Term Archive & Retrieval:
+      - LOTAR Method:
+        - Each Archival Method:
+          - Access Control
+          - Identifier
+          - Description
+          - Defining Activity
+          - Archival Status: #(Specify one)
+            - Active
+            - Archived
+            - Retrieved
+          - Model Retrieval Method: #(Specify one)
+            - Object #"text Description of the Model Retrieval Method"
+  - Model Cost:
+    - Development Cost:
+      - Each Deployment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Development Cost: #(Specify one)
+          - Other #"specification of the Development Cost"
+    - Lifecycle Cost:
+      - Each Deployment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Per Cycle/Instance Deployment Cost: #(Specify one)
+          - Not Applicable
+          - Other #"specification of the Per Cycle/Instance Deployment Cost"
+        - Cumulative Deployment Cost: #(Specify one)
+          - Other #"specification of the Cumulative Deployment Cost"
+        - Maintenance Cost: #(Specify one)
+          - Not Applicable
+          - Other #"specification of the Maintenance Cost"
+        - Operational Cost: #(Specify one)
+          - Other #"specification of the Operational Cost"
+        - Retirement Cost: #(Specify one)
+          - Other #"specification of the Retirement Cost"
+        - Cumulative Cost: #(Specify one)
+          - Other #"specification of the Cumulative Cost"
+    - Lifecycle Financial Risk:
+      - Each Deployment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Financial Risk: #(Specify all that apply)
+          - Not Applicable
+          - Other #"description of the Financial Risk"

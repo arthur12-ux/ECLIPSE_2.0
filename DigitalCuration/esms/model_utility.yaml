@@ -1,0 +1,81 @@
+Model Utility:
+  - Model Usage:
+    - Lifecycle Processes Supported:
+      - Each Lifecycle Process Supported:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Reference process list: #(Specify one)
+          - Not Applicable
+          - ISO/IEC/IEEE 15288
+          - Other #“specification of the Reference Process List”
+    - Model Purposes Supported:
+      - Each Model Purpose:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Reference list of purposes #(Specify one)
+        - Not Applicable:
+          - Other #“specification of the Reference List of Purposes”
+    - System Lifecycle Span Supported:
+      - Base Instance:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+    - Decision Support Domain:
+      - Each Decision Support Domain Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Decision Support Domain Assessment Method/Reference: #(Specify one)
+          - Not Applicable
+          - ASME V&V 40
+          - ASSESS Engineering Simulation Risk Model
+          - NASA Standard 7009A
+          - Sandia PCMM
+          - Other #"specification of the Decision Support Domain Assessment Method/Reference"
+        - Characterization of the Domain of Appropriateness:
+          - Not Applicable
+          - Other #"description of the Characterization of the Domain of Appropriateness"
+    - Perceived Model Complexity:
+      - Each Applicable Stakeholder Type:
+        - Access Control
+        - Identifier: #(Specify all that apply)
+          - Not Applicable
+          - Access Control Management
+          - Engineering Department
+          - Engineering Department Management
+          - ES Model Developer
+          - ES Model Operator
+          - ES Model Owner
+          - External Authorities
+          - IT Department
+          - Model Reviewers
+          - Quality Department
+          - Physical Test Department
+          - Support Department
+          - Other #"specification of Stakeholder Type(s)"
+        - Description
+        - Defining Activity
+        - Perceived Complexity Ranking: #(Specify one)
+          - High
+          - Low
+          - Medium
+        - Other #" specification of the Perceived Complexity Ranking"
+  - Model Value:
+    - Level of Anticipated Use and Value:
+      - Each Applicable User Group:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Anticipated Level of Use: #(Specify one)
+          - Not Applicable
+          - Other #"specification of the Anticipated Level of Use"
+        - Value Level Use: #(Specify one)
+          - Not Applicable
+          - Other #"specification of the Value Level Use"

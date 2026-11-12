@@ -1,0 +1,67 @@
+Model Identity and Focus:
+  - Model Identity:
+    - ES Model Identity:
+      - Base Instance: # (there is only one)
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+  - Model Purpose:
+    - ES Model Purpose:
+      - Base Instance: # (there is only one)
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Purpose Type: # (Specify all that apply)
+          - Archive
+          - Conceptual
+          - Developmental
+          - Production
+          - Simulation Method Development
+          - Other # "specification of ES Model Purpose Type"
+  - Modeled System of Interest:
+    - System of Interest:
+      - Each Modeled System of Interest:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+  - Modeled Environmental Domains:
+    - Modeled Domains:
+      - Each Modeled Domain:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Type: # (Specify one)
+          - Not Applicable
+          - Distribution
+          - Manufacturing
+          - Use
+          - Other # "specification of Type"
+        - Classification: # (Specify one)
+          - Not Applicable
+          - Abnormal
+          - Hostile
+          - Nominal
+          - Other # "specification of Classification"
+  - Modeled Scenario:
+    - Modeled Scenarios:
+      - Each Modeled Scenario:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Model Objectives: # (Specify all that apply)
+          - Analysis
+          - Certification
+          - Compliance
+          - Design
+          - Failure Assessment
+          - Failure Prediction
+          - Life Assessment
+          - Integrated Simulation
+          - Manufacturability
+          - Service Requirements
+          - Other # “description of modeling objectives”

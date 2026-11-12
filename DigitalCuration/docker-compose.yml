@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: digitalcuration:latest
+    ports:
+      - "8501:8501"
+    environment:
+      # Prefer keeping secrets out of compose files; use .env or your shell to provide values
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE=${OPENAI_API_BASE}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - SHOW_PROGRESS=${SHOW_PROGRESS}
+      - SAMPLE_LIMIT=${SAMPLE_LIMIT}
+    volumes:
+      - ./storage:/app/storage
+      - ./metadata:/app/metadata
+      - ./data:/app/data:ro
+    restart: unless-stopped
+    tty: true

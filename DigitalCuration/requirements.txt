@@ -1,0 +1,11 @@
+llama-index
+sentence-transformers
+transformers
+pandas
+openpyxl
+pypdf
+python-docx
+tqdm
+streamlit
+scikit-learn
+pyyaml

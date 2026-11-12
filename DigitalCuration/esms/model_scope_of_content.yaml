@@ -1,0 +1,124 @@
+Model Scoe of Content:
+  - Modeled Stakeholder Value:
+    - Stakeholder Values of Interest:
+      - Each Stakeholder Value of Interest:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+      - Stakeholder Groups Impacted (Specify all that apply):
+        - All
+        - Governance
+        - Influencers
+        - Providers
+        - Users
+        - Other # "specification of Impacted Stakeholders"
+      - Coupled External Interactions: # (Specify One)
+      - Other   #"definition of coupled external interactions"
+      - Coupled Internal Interactions: # (Specify One)
+      - Other #"definition of coupled internal interactions"
+      - Coupled Quantities of Interest: Other #"definition of coupled quantities of interest"
+  - Modeled System External Behavior:
+    - External Interactions:
+      - Each External Interaction of Interest:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Input-output Exchange
+        - External to Model (Specify One) - Other # "specification of input-output relationships"
+        - External Interface (Specify One) - Other # "specification of the external interface(s)"
+  - Modeled System Internal Behavior:
+    - Internal Interactions:
+      - Each Internal Interaction of Interest:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Quantities of Interest: # (Specify One)
+          - Other #"specification of quantities of interest"
+        - Relationships: # (Specify One)
+          - Other #"specification of relationships"
+  - Model Attributes:
+    - Model Components & Relationships:
+      - Each Major Model Component:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Architectural Relationship # (Specify One)
+        - Other  #"specification of Architectural Relationship(s)"
+        - Other Relationships: # (Specify One)
+          - Other #"specification of Other Relationship(s)"
+        - Correlation to System Components: # (Specify One)
+          - Other #"specification of Correlation to System Components"
+  - Conceptual Model Behavior Couplings:
+    - I/O Couplings:
+    - Each Input to Output Coupling:
+      - Access Control
+      - Identifier
+      - Description
+      - Defining Activity
+      - Inputs: # (Specify One)
+        - Other #"specification of associated Inputs"
+      - Outputs: # (Specify One)
+        - Other #"description of associated Outputs"
+    - Decomposition Couplings:
+    - Each Decomposition of Behavior:
+      - Access Control
+      - Identifier
+      - Description
+      - Defining Activity
+      - Behavior Couplings: #  # (Specify One)
+        - Not Applicable
+        - Other #"specification of Behavior Couplings"
+      - Other Couplings: #  # (Specify One)
+        - Not Applicable
+        - Other #"specification of Other Couplings"
+    - Characterization Couplings:
+      - Each Coupling to Functional Identity:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Functional Identity Type: # (Specify one)
+          - Not Applicable
+          - Functional Part
+          - Material
+          - Modeled Part
+          - Part Number
+          - Serial Number
+          - Other #"specification of Functional Identity Type"
+        - Objective Behavior: # (Specify One)
+          - Other #"specification of Objective Behavior"
+  - Managed Model Datasets:
+    - Datasets:
+      - Each Dataset:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Dataset Type: # (Specify one)
+          - Input
+          - Links
+          - Output
+          - Reference
+          - Other #"specification of Dataset Type"
+        - System & Method of Access: # (Specify One)
+          - Other #"specification of System & Method of Access"
+  - Failure Modes and Effects:
+    - Identified Potential Failure Modes:
+      - Each Identified Model Failure Mode:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Severity: # (Specify One)
+          - Other #"specification of Severity"
+        - Likelihood: # (Specify One)
+          - Other #"specification of Likelihood"
+        - Ability to Detect: # (Specify One)
+          - Other #"specification of the Ability to Detect"
+
+
+

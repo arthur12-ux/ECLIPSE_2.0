@@ -1,0 +1,17 @@
+.venv
+data
+storage
+.git
+__pycache__
+*.pyc
+*.pkl
+*.npy
+*.zip
+*.tar.gz
+*.egg-info
+notebooks
+archive
+backup
+*.ipynb
+env
+.env

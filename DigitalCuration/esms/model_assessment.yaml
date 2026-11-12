@@ -1,0 +1,171 @@
+Model Assessment:
+  - Model Qualification Assessment:
+    - Conceptual Model Assessment Characterization:
+      - Each Conceptual Model Assessment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Assessment criteria: #(Specify all that apply)
+          - Other # specification of applicable assessment criteria"
+        - Criteria characterizations: #(Specify all that apply)
+          - Other # description of applicable assessment criteria characterizations"
+        - Conceptual Model Assessment characterization summary: #(Specify one)
+          - Other # specification of assessment characterization summary"
+    - Conceptual Model Application Envelope:
+      - Each Operating Condition Parameter:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Valid Value Range: #(Specify one)
+          - Not Applicable
+          - Range # specification of the valid range for this Operating Condition Parameter"
+        - Current Value: #(Specify one)
+          - Other # specification of the current value of this Operating Condition Parameter"
+        - Validity Status: #(Specify one)
+          - Not Applicable
+          - Invalid
+          - Valid
+  - Code Verification Assessment:
+    - Code Assumptions & Limitations:
+      - Each Assumption or Limitation:
+      - Access Control
+      - Identifier
+      - Description
+      - Defining Activity
+    - Code Verification Assessment Characterization:
+      - Each Code Verification Assessment Method:
+        - Access Control
+        - Identifier: #(Specify one)
+        - NAFEMS Benchmarks:
+          - None
+          - Modelica compliance
+          - Theoretical solutions
+          - Other # specification of this Code Verification Assessment Method"
+        - Description
+        - Defining Activity
+        - Domain of Verification: #(Specify one)
+          - Other # specification of the Domain of Verification"
+        - Error Thresholds or Bounds: #(Specify all that apply)
+          - Other # specification of applicable error Thresholds or Bounds"
+        - Error Estimate Characterizations: #(Specify all that apply)
+          - Other # description of error estimate characterizations "
+  - Solution Verification Assessment:
+    - Solution Description:
+      - Each Solution Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+    - Solution Assumptions & Limitations:
+      - Each Assumption or Limitation:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+    - Solution Verification Assessment Characterization:
+      - Each Solution Verification Assessment Method:
+        - Access Control
+        - Identifier: #(Specify one)
+          - NASA STD 7009A
+          - None
+          - Other # “specification of the Solution Verification Method"
+        - Description
+        - Defining Activity
+        - Domain of Verification: #(Specify one)
+          - Other # specification of the Domain of Verification"
+        - Solution Error Thresholds or Bounds: #(Specify all that apply)
+          - Other # specification of the applicable error Bounds"
+        - Characterization of Solution Error Estimates: #(Specify all that apply)
+          - Other # description of error estimates"
+        - Solution Verification Characterization Summary: #(Specify one)
+          - Other # specification of assessment characterization summary"
+  - Model Validation Assessment:
+    - Model Validation Assessment Characterization:
+      - Each Model Validation Assessment Method:
+        - Access Control
+        - Identifier: #(Specify one)
+          - NASA STD 7009A
+          - None
+          - Other # specification of the Solution Validation Method"
+        - Description
+        - Defining Activity
+        - Domain of Validation: #(Specify one)
+          - Other # specification of the Domain of Validation"
+        - Assessment Criteria: #(Specify all that apply)
+          - Other # specification of the Assessment Criteria used with thresholds or bounds"
+        - Criteria Characterizations: #(Specify all that apply)
+          - Other #  description of appropriate assessment Criteria Characterizations"
+        - Target Model Validation Characterization Summary: #(Specify one)
+          - Other # specification of Target Model Validation Characterization"
+        - Model Validation Characterization Summary: #(Specify one)
+          - Other # specification of assessment characterization summary"
+  - UQ and Sensitivity Assessment:
+    - UQ and Sensitivity Assessment Characterization:
+      - Each UQ and Sensitivity Assessment Method:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Assessment Criteria: #(Specify all that apply)
+          - Other # specificaton of Assessment Criteria used"
+        - Criteria Characterizations: #(Specify all that apply)
+          - Other # description of assessment Criteria Characterizations"
+        - Target UQ and Sensitivity characterization summary: #(Specify one)
+          - Other # specification of Target UQ and Sensitivity Characterization Summary"
+        - UQ and Sensitivity characterization summary: #(Specify one)
+          - Other # specification of assessment characterization summary"
+  - Model Appropriateness Assessment:
+    - Model Appropriateness Characterization:
+      - Each Appropriateness Assessment Framework:
+        - Access Control
+        - Identifier: #(Specify one)
+          - ASSESS Engineering Simulation Risk Model
+          - NASA STD 7009A
+          - SANDIA Predictive Capability Maturity Model
+          - None
+          - Other # specification of Appropriateness Assessment Framework"
+        - Description
+        - Defining Activity
+        - Assessment Criteria: #(Specify all that apply)
+          - Other # specification of appropriate Assessment Criteria with thresholds or bounds"
+        - Criteria Characterizations: #(Specify all that apply)
+          - Other # description of assessment Criteria Characterizations"
+        - Target Model Appropriateness Characterization Summary: #(Specify all that apply)
+          - Appropriateness index # text summary"
+          - None
+          - Risk index # text summary"
+          - Other # specification of the Target Model Appropriateness Characterization Summary "
+        - Model appropriateness characterization summary: #(Specify all that apply)
+          - Appropriateness index # text summary"
+          - None
+          - Risk index # text summary"
+          - Other # specification of assessment characterization summary"
+  - Third-Party Acceptance:
+    - Acceptance Status:
+      - Each Accepting Authority:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Acceptance Criteria: #(Specify all that apply)
+          - Other # specification of each Acceptance Criteria"
+        - Acceptance Status Summary: #(Specify one)
+          - Accepted
+          - Not Accepted
+          - Other #  description of Acceptance Status Summary"
+        - Report or Reference Document: #(Specify all that apply)
+          - Other # text description of each applicabe Report or Reference Document"
+    - Standards Compliance:
+      - Each Applicable Standard:
+        - Access Control
+        - Identifier
+        - Description
+        - Defining Activity
+        - Standard Owner: #(Specify one)
+          - Not Applicable
+          - Other # specification of the Standard Owner" 
+        - Compliance Status: #(Specify one)
+          - Not Applicable
+          - Other # specification of the Compliance Status for this Applicable Standard"
