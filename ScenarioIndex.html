@@ -2658,21 +2658,25 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
       </div>
 
       <div class="grid-2">
-        <div class="panel">
-          <div class="panel-title">Activate Systems</div>
+        <div class="panel mna-panel">
+          <div class="mna-panel-head">
+            <div class="panel-title">Activate Systems</div>
+            <span id="activeSystemsCount" class="mna-count" aria-live="polite"></span>
+          </div>
           <div class="mini-note" style="margin-bottom:12px;">Run Graph first to parse the SysML and build the connectivity graph. You can then toggle which modules stay active.</div>
-          <label style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;background:rgba(255,209,102,0.06);cursor:pointer;">
-            <span style="min-width:0;">
-              <span style="display:block;font-size:10px;font-weight:700;color:#ffd166;">Ignore power constraints</span>
-              <span id="manualNoPowerModeHint" style="display:block;margin-top:3px;font-size:9px;line-height:1.4;color:var(--text3);">Power availability can limit the simulation.</span>
+          <label class="mna-power">
+            <span class="mna-power-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></span>
+            <span class="mna-power-text">
+              <span class="mna-power-title">Ignore power constraints</span>
+              <span id="manualNoPowerModeHint" class="mna-power-hint">Power availability can limit the simulation.</span>
             </span>
-            <input id="manualNoPowerModeToggle" type="checkbox" onchange="setManualNoPowerMode(this.checked)" style="width:18px;height:18px;flex:0 0 auto;accent-color:#ffd166;cursor:pointer;">
+            <input id="manualNoPowerModeToggle" class="toggle toggle-gold" type="checkbox" onchange="setManualNoPowerMode(this.checked)">
           </label>
           <div class="system-grid" id="systemGrid"></div>
 
           <!-- Run graph pipeline button -->
-          <div style="margin-top:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-            <button id="runGraphBtn" class="msosa-btn" style="padding:12px 24px; font-size:14px;" onclick="triggerGraphWorkflow()">
+          <div class="mna-run">
+            <button id="runGraphBtn" class="msosa-btn mna-run-btn" onclick="triggerGraphWorkflow()">
               ▶ Run Graph
             </button>
             <div id="graphStatus" style="font-size:12px; color:var(--text2); line-height:1.5;"></div>
@@ -2681,8 +2685,11 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
 
         </div>
 
-        <div class="panel">
-          <div class="panel-title">Mission Operations Graph</div>
+        <div class="panel mna-panel">
+          <div class="mna-panel-head">
+            <div class="panel-title">Mission Operations Graph</div>
+            <span class="mna-hint">Hover a module to trace its flows</span>
+          </div>
           <div class="ops-legend" id="opsLegend">
             <span><span class="legend-module"></span>Module</span>
           </div>
@@ -3044,7 +3051,9 @@ function buildAssemblyTreeFromActiveSystems() {
     }
 
     if (systems.length === 0) {
-      wrap.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0;">Run Graph to load modules from SysML.</div>';
+      wrap.innerHTML = '<div class="mna-empty">Run Graph to load modules from SysML.</div>';
+      const countEl = document.getElementById('activeSystemsCount');
+      if (countEl) countEl.textContent = '';
       updatePowerModeStatus();
       return;
     }
@@ -3059,23 +3068,32 @@ function buildAssemblyTreeFromActiveSystems() {
       const moduleClass = getModuleClass(sys.id);
       const card = document.createElement('div');
       card.className = 'sys-card' + (sys.active ? ' active' : '');
+      card.style.setProperty('--cls', moduleClassStyle(moduleClass).color);
       card.innerHTML = `
         <div class="sys-head">
-          <div class="sys-name">${sys.name}</div>
-          <input class="toggle" type="checkbox" ${sys.active ? 'checked' : ''} onchange="toggleSystem('${sys.id}')">
+          <span class="sys-icon">${moduleClassIconSvg(moduleClass)}</span>
+          <div class="sys-title">
+            <div class="sys-name">${sys.name}</div>
+            <div class="sys-meta">${sys.meta}</div>
+          </div>
+          <input class="toggle" type="checkbox" ${sys.active ? 'checked' : ''} onchange="toggleSystem('${sys.id}')"
+            aria-label="Activate ${escapeHtml(sys.name)}">
         </div>
-        <div class="sys-meta">${sys.meta}</div>
-        <label style="display:grid;grid-template-columns:auto minmax(110px,1fr);gap:7px;align-items:center;margin-top:8px;font-size:9px;color:var(--text3);">
-          Class
+        <label class="sys-class">
+          <span>Class</span>
           <select onchange="event.stopPropagation();setModuleClass('${jsString(sys.id)}',this.value)"
-            onclick="event.stopPropagation()"
-            style="width:100%;background:#07101a;color:var(--text1);border:1px solid var(--border2);border-radius:6px;padding:5px;font-size:9px;">
+            onclick="event.stopPropagation()">
             ${SCENARIO_MODULE_CLASSES.map(className => `<option value="${className}" ${className === moduleClass ? 'selected' : ''}>${className}</option>`).join('')}
           </select>
         </label>
       `;
       wrap.appendChild(card);
     });
+    const countEl = document.getElementById('activeSystemsCount');
+    if (countEl) {
+      const activeCount = systems.filter(s => s.active).length;
+      countEl.innerHTML = `<b>${activeCount}</b> / ${systems.length} active`;
+    }
     if (typeof syncDesControlsToActiveSystems === 'function') {
       syncDesControlsToActiveSystems();
     }
@@ -7390,6 +7408,25 @@ function getEquationOutputName(equation) {
 
 const SCENARIO_MODULE_CLASSES = ['Source', 'Processor', 'Storage', 'Consumer', 'Transporter', 'PowerGenerator', 'Passive'];
 
+// Visual identity of each module class (Mission Network Activation cards + operations graph)
+const MODULE_CLASS_STYLE = {
+  Source:         { color: '#7ee0b1', icon: '<path d="M12 19V6M6.5 11.5L12 6l5.5 5.5"/><path d="M5 20h14"/>' },
+  Processor:      { color: '#c77dff', icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>' },
+  Storage:        { color: '#57c7ff', icon: '<ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/>' },
+  Consumer:       { color: '#ffb347', icon: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>' },
+  Transporter:    { color: '#ffd54a', icon: '<rect x="3" y="8" width="12" height="7.5" rx="1.5"/><path d="M15 10.5h3.2l2.3 3v2H15"/><circle cx="7" cy="17.6" r="1.8"/><circle cx="17" cy="17.6" r="1.8"/>' },
+  PowerGenerator: { color: '#ff5c6c', icon: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>' },
+  Passive:        { color: '#8a94a6', icon: '<rect x="5" y="5" width="14" height="14" rx="2.5"/>' },
+};
+
+function moduleClassStyle(className) {
+  return MODULE_CLASS_STYLE[className] || MODULE_CLASS_STYLE.Passive;
+}
+
+function moduleClassIconSvg(className, extraClass = '') {
+  return `<svg class="mna-icon ${extraClass}" viewBox="0 0 24 24" aria-hidden="true">${moduleClassStyle(className).icon}</svg>`;
+}
+
 function getModulePortFlowDirections(moduleId) {
   const baseId = getBaseModuleId(moduleId);
   const part = getSysmlPartData(baseId) || {};
@@ -10238,10 +10275,16 @@ let up42MoonImg = null;
         const rank = flow => String(flow).toLowerCase().includes('power') ? 0 : 1;
         return rank(a) - rank(b) || String(a).localeCompare(String(b));
       });
+    // Module classes present in the graph, then the flows drawn between them
+    const classNames = [...new Set((graphData?.active_nodes || []).map(node => getModuleClass(node)))]
+      .sort((a, b) => SCENARIO_MODULE_CLASSES.indexOf(a) - SCENARIO_MODULE_CLASSES.indexOf(b));
     legend.innerHTML = [
-      '<span><span class="legend-module"></span>Module</span>',
+      ...classNames.map(cls =>
+        `<span class="legend-class" style="--cls:${moduleClassStyle(cls).color}">${moduleClassIconSvg(cls)}${escapeHtml(cls)}</span>`
+      ),
+      flowNames.length ? '<span class="legend-sep" aria-hidden="true"></span>' : '',
       ...flowNames.map(flow =>
-        `<span><span class="legend-dot" style="background:${getOperationsFlowColor(flow)}"></span>${escapeHtml(flow)} flow</span>`
+        `<span class="legend-flow" style="--flow:${getOperationsFlowColor(flow)}"><span class="legend-line"></span>${escapeHtml(flow)} flow</span>`
       )
     ].join('');
   }
@@ -10252,6 +10295,7 @@ let up42MoonImg = null;
     if (!container || !svgLayer) return;
 
     const graphData = data?.raw_active_nodes ? data : buildOperationsGraphDisplayData(data || {});
+    const SVG_NS = 'http://www.w3.org/2000/svg';
 
     container.querySelectorAll('.node').forEach(n => n.remove());
     svgLayer.innerHTML = '<defs></defs>';
@@ -10270,125 +10314,348 @@ let up42MoonImg = null;
 
     const resolvedPx = computeLiveGraphLayout(nodes, conns, cW, cH, NODE_W, NODE_H);
 
-    function getNodeCenter(px) {
-      return {
-        x: px.x + NODE_W / 2,
-        y: px.y + NODE_H / 2
-      };
+    const connected = new Set();
+    conns.forEach(c => { connected.add(c.fromName); connected.add(c.toName); });
+
+    // Hovering a module highlights its flows and dims the rest of the graph
+    function focusNode(name) {
+      container.classList.toggle('has-focus', Boolean(name));
+      svgLayer.querySelectorAll('.ops-link').forEach(link => {
+        link.classList.toggle('is-hot', Boolean(name) && (link.dataset.from === name || link.dataset.to === name));
+      });
+      container.querySelectorAll('.node').forEach(node => {
+        const linked = Boolean(name) && (node.dataset.id === name || conns.some(c =>
+          (c.fromName === name && c.toName === node.dataset.id) || (c.toName === name && c.fromName === node.dataset.id)));
+        node.classList.toggle('is-hot', linked);
+      });
     }
 
-    function getAnchors(pxA, pxB) {
-      const a = getNodeCenter(pxA);
-      const b = getNodeCenter(pxB);
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      if (Math.abs(dx) >= Math.abs(dy)) {
-        return {
-          a: { x: a.x + (dx >= 0 ? NODE_W / 2 : -NODE_W / 2), y: a.y },
-          b: { x: b.x + (dx >= 0 ? -NODE_W / 2 : NODE_W / 2), y: b.y }
-        };
-      }
-
-      return {
-        a: { x: a.x, y: a.y + (dy >= 0 ? NODE_H / 2 : -NODE_H / 2) },
-        b: { x: b.x, y: b.y + (dy >= 0 ? -NODE_H / 2 : NODE_H / 2) }
-      };
-    }
-
-    conns.forEach(c => {
-      const fromName = c.fromName;
-      const toName = c.toName;
-      const flow = c.flow || 'Power';
-      const pxA = resolvedPx[fromName];
-      const pxB = resolvedPx[toName];
-      if (!pxA || !pxB) return;
-
-      const color = getOperationsFlowColor(flow);
-      const markerId = `arrowhead-${String(flow).replace(/[^A-Za-z0-9_-]/g, '_')}`;
-
-      if (!defs.querySelector(`#${markerId}`)) {
-        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-        marker.setAttribute('id', markerId);
-        marker.setAttribute('viewBox', '0 0 10 10');
-        marker.setAttribute('refX', '8');
-        marker.setAttribute('refY', '5');
-        marker.setAttribute('markerWidth', '6');
-        marker.setAttribute('markerHeight', '6');
-        marker.setAttribute('orient', 'auto-start-reverse');
-        marker.innerHTML = `<path d="M2 1L8 5L2 9" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-        defs.appendChild(marker);
-      }
-
-      const { a, b } = getAnchors(pxA, pxB);
-      const sameEndpoints = conns
-        .filter(other => other.fromName === fromName && other.toName === toName)
-        .sort((left, right) => String(left.flow || '').localeCompare(String(right.flow || '')));
-      const parallelIndex = Math.max(0, sameEndpoints.indexOf(c));
-      const parallelOffset = parallelIndex - (sameEndpoints.length - 1) / 2;
-      const isPowerConnection = isPowerFlow(flow);
-      const sameSourcePower = conns
-        .filter(other => other.fromName === fromName && isPowerFlow(other.flow))
-        .sort((left, right) => String(left.toName || '').localeCompare(String(right.toName || '')));
-      const sourcePowerIndex = Math.max(0, sameSourcePower.indexOf(c));
-      const mostlyVertical = Math.abs(b.y - a.y) > Math.abs(b.x - a.x) * 0.45;
-      let cx1;
-      let cy1;
-      let cx2;
-      let cy2;
-
-      if (mostlyVertical) {
-        // Connect the separate infrastructure/resource rows through the open
-        // centre of the graph, rather than looping above the cards.
-        const laneOffset = (sourcePowerIndex - (sameSourcePower.length - 1) / 2) * 26 + parallelOffset * 14;
-        cx1 = a.x + laneOffset;
-        cy1 = a.y + (b.y - a.y) * 0.36;
-        cx2 = b.x + laneOffset;
-        cy2 = b.y - (b.y - a.y) * 0.36;
-      } else {
-        const laneBend = 24 + parallelOffset * 16;
-        cx1 = a.x + (b.x - a.x) * 0.35;
-        cy1 = a.y + laneBend;
-        cx2 = a.x + (b.x - a.x) * 0.65;
-        cy2 = b.y + laneBend;
-      }
-
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', `M ${a.x} ${a.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${b.x} ${b.y}`);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', color);
-      path.setAttribute('stroke-width', '3');
-      path.setAttribute('stroke-opacity', '0.95');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('vector-effect', 'non-scaling-stroke');
-      path.setAttribute('filter', 'drop-shadow(0 0 6px rgba(0,0,0,0.35))');
-      path.setAttribute('marker-end', `url(#${markerId})`);
-      svgLayer.appendChild(path);
-
-      if (!isPowerConnection || sameSourcePower.length === 1) {
-        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        txt.setAttribute('x', (a.x + 3 * cx1 + 3 * cx2 + b.x) / 8);
-        txt.setAttribute('y', (a.y + 3 * cy1 + 3 * cy2 + b.y) / 8 - 8);
-        txt.setAttribute('text-anchor', 'middle');
-        txt.setAttribute('fill', color);
-        txt.setAttribute('font-size', '11');
-        txt.setAttribute('font-weight', '700');
-        txt.setAttribute('opacity', '0.95');
-        txt.textContent = flow;
-        svgLayer.appendChild(txt);
-      }
-    });
-
+    // 1) Place the modules first, so links can be drawn from their real (measured) boxes.
+    const nodeEls = {};
     nodes.forEach(name => {
       const px = resolvedPx[name];
       if (!px) return;
 
+      const moduleClass = getModuleClass(name);
       const div = document.createElement('div');
-      div.className = 'node active';
+      div.className = 'node active' + (connected.has(name) ? '' : ' is-isolated');
+      div.dataset.id = name;
       div.style.zIndex = '2';
       div.style.left = px.x + 'px';
       div.style.top = px.y + 'px';
-      div.innerHTML = `<div class="node-title">${getSystemDisplayName(name)}</div><div class="node-tag">${name}</div>`;
+      div.style.setProperty('--cls', moduleClassStyle(moduleClass).color);
+      div.title = `${name} · ${moduleClass}${connected.has(name) ? '' : ' · no active connection'}`;
+      div.innerHTML =
+        `<div class="node-title">${getSystemDisplayName(name)}</div>` +
+        `<div class="node-tag">${moduleClassIconSvg(moduleClass, 'node-icon')}${escapeHtml(moduleClass)}</div>`;
+      div.addEventListener('mouseenter', () => focusNode(name));
+      div.addEventListener('mouseleave', () => focusNode(null));
       container.appendChild(div);
+      nodeEls[name] = div;
+    });
+
+    const boxes = {};
+    Object.entries(nodeEls).forEach(([name, el]) => {
+      const px = resolvedPx[name];
+      boxes[name] = {
+        x: el.offsetWidth ? el.offsetLeft : px.x,
+        y: el.offsetHeight ? el.offsetTop : px.y,
+        w: el.offsetWidth || NODE_W,
+        h: el.offsetHeight || NODE_H,
+      };
+    });
+
+    // 2) Which side of each box a link leaves / enters by.
+    const SIDES = {
+      top:    { n: [0, -1] },
+      bottom: { n: [0, 1] },
+      left:   { n: [-1, 0] },
+      right:  { n: [1, 0] },
+    };
+    const center = (b) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+
+    const links = conns
+      .filter(c => boxes[c.fromName] && boxes[c.toName] && c.fromName !== c.toName)
+      .map(c => {
+        const A = boxes[c.fromName];
+        const B = boxes[c.toName];
+        const gapX = Math.max(B.x - (A.x + A.w), A.x - (B.x + B.w));
+        const gapY = Math.max(B.y - (A.y + A.h), A.y - (B.y + B.h));
+        const ca = center(A);
+        const cb = center(B);
+        // Is another module sitting on the straight line between the two?
+        const blocked = Object.entries(boxes).some(([name, o]) => {
+          if (name === c.fromName || name === c.toName) return false;
+          for (let i = 1; i < 20; i++) {
+            const x = ca.x + (cb.x - ca.x) * i / 20;
+            const y = ca.y + (cb.y - ca.y) * i / 20;
+            if (x > o.x - 6 && x < o.x + o.w + 6 && y > o.y - 6 && y < o.y + o.h + 6) return true;
+          }
+          return false;
+        });
+        const sameRow = Math.abs(cb.y - ca.y) < Math.max(A.h, B.h) * 0.6;
+        const sameCol = Math.abs(cb.x - ca.x) < Math.max(A.w, B.w) * 0.6;
+        let fromSide;
+        let toSide;
+        // Arc around the modules in between, along the outer (less crowded) edge of the
+        // graph when there is room for it, otherwise along the inner side.
+        const pickSide = (nearRoom, farRoom, nearSide, farSide) => {
+          const ROOM = 36;
+          if (nearRoom >= ROOM && (nearRoom <= farRoom || farRoom < ROOM)) return nearSide;
+          if (farRoom >= ROOM) return farSide;
+          return nearRoom >= farRoom ? nearSide : farSide;
+        };
+        if (blocked && sameRow) {
+          const topRoom = Math.min(A.y, B.y);
+          const bottomRoom = cH - Math.max(A.y + A.h, B.y + B.h);
+          const side = pickSide(topRoom, bottomRoom, 'top', 'bottom');
+          fromSide = side;
+          toSide = side;
+        } else if (blocked && sameCol) {
+          const leftRoom = Math.min(A.x, B.x);
+          const rightRoom = cW - Math.max(A.x + A.w, B.x + B.w);
+          const side = pickSide(rightRoom, leftRoom, 'right', 'left');
+          fromSide = side;
+          toSide = side;
+        } else if (gapY >= gapX) {
+          fromSide = cb.y >= ca.y ? 'bottom' : 'top';
+          toSide = cb.y >= ca.y ? 'top' : 'bottom';
+        } else {
+          fromSide = cb.x >= ca.x ? 'right' : 'left';
+          toSide = cb.x >= ca.x ? 'left' : 'right';
+        }
+        return { c, A, B, fromSide, toSide };
+      });
+
+    // 3) Spread the links that share a side along that side (ordered to avoid crossings).
+    const ports = {};
+    const addPort = (name, side, link, end, other) => {
+      const key = `${name}|${side}`;
+      (ports[key] = ports[key] || []).push({ link, end, other });
+    };
+    links.forEach(link => {
+      addPort(link.c.fromName, link.fromSide, link, 'from', center(link.B));
+      addPort(link.c.toName, link.toSide, link, 'to', center(link.A));
+    });
+    Object.entries(ports).forEach(([key, list]) => {
+      const [name, side] = key.split('|');
+      const box = boxes[name];
+      const horizontalSide = side === 'top' || side === 'bottom';
+      list.sort((p, q) => horizontalSide ? p.other.x - q.other.x : p.other.y - q.other.y);
+      list.forEach((port, i) => {
+        const f = 0.2 + 0.6 * (i + 1) / (list.length + 1);
+        const point = {
+          top:    { x: box.x + box.w * f, y: box.y },
+          bottom: { x: box.x + box.w * f, y: box.y + box.h },
+          left:   { x: box.x,             y: box.y + box.h * f },
+          right:  { x: box.x + box.w,     y: box.y + box.h * f },
+        }[side];
+        port.link[port.end === 'from' ? 'a' : 'b'] = point;
+      });
+    });
+
+    // 4) Route each link: leave / enter perpendicular to the box edge, and detour around
+    //    other modules through a side waypoint when the direct curve would cross one.
+    const bez = (p0, p1, p2, p3, t) => {
+      const u = 1 - t;
+      return {
+        x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+        y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y,
+      };
+    };
+    const add = (p, v, k) => ({ x: p.x + v[0] * k, y: p.y + v[1] * k });
+
+    // Free "corridors" between the module rows / columns, used as detour waypoints.
+    function corridors(axis) {
+      const lo = axis === 'x' ? 'x' : 'y';
+      const len = axis === 'x' ? 'w' : 'h';
+      const limit = axis === 'x' ? cW : cH;
+      const bands = Object.values(boxes).map(b => [b[lo], b[lo] + b[len]]).sort((p, q) => p[0] - q[0]);
+      const merged = [];
+      bands.forEach(([s, e]) => {
+        const last = merged[merged.length - 1];
+        if (last && s <= last[1]) last[1] = Math.max(last[1], e);
+        else merged.push([s, e]);
+      });
+      const out = [];
+      if (merged.length) {
+        if (merged[0][0] > 16) out.push(merged[0][0] / 2);
+        for (let i = 1; i < merged.length; i++) out.push((merged[i - 1][1] + merged[i][0]) / 2);
+        const end = merged[merged.length - 1][1];
+        if (limit - end > 16) out.push((end + limit) / 2);
+      }
+      return out;
+    }
+    const gapX = corridors('x');
+    const gapY = corridors('y');
+
+    // Smooth curve through points; the first / last tangents follow the box-edge normals.
+    function splineSegments(points, nA, nB) {
+      const last = points.length - 1;
+      const tangents = points.map((p, i) => {
+        // straight lead-out / lead-in: points 0-1 and (last-1)-last stay on the edge normal
+        if (i <= 1) return nA;
+        if (i >= last - 1) return [-nB[0], -nB[1]];
+        const q = points[i + 1];
+        const r = points[i - 1];
+        const L = Math.hypot(q.x - r.x, q.y - r.y) || 1;
+        return [(q.x - r.x) / L, (q.y - r.y) / L];
+      });
+      const segs = [];
+      for (let i = 0; i < points.length - 1; i++) {
+        const p = points[i];
+        const q = points[i + 1];
+        const d = Math.hypot(q.x - p.x, q.y - p.y);
+        const straight = i === 0 || i === last - 1;
+        const s = straight ? d / 3 : Math.max(16, Math.min(120, d * 0.42));
+        segs.push([p, add(p, tangents[i], s), add(q, tangents[i + 1], -s), q]);
+      }
+      return segs;
+    }
+
+    // Samples of the links already drawn, so later links avoid running on top of them
+    const routedSamples = [];
+
+    function measure(segments, link) {
+      let hitCount = 0;
+      let length = 0;
+      let crowding = 0;
+      let turning = 0;          // total change of direction (radians): penalises loops / S-bends
+      let prevAngle = null;
+      const own = { [link.c.fromName]: link.a, [link.c.toName]: link.b };
+      const hitBoxes = new Set();
+      segments.forEach(seg => {
+        let prev = seg[0];
+        for (let i = 1; i <= 24; i++) {
+          const p = bez(seg[0], seg[1], seg[2], seg[3], i / 24);
+          const step = Math.hypot(p.x - prev.x, p.y - prev.y);
+          length += step;
+          if (step > 0.5) {
+            const angle = Math.atan2(p.y - prev.y, p.x - prev.x);
+            if (prevAngle !== null) {
+              let delta = Math.abs(angle - prevAngle);
+              if (delta > Math.PI) delta = 2 * Math.PI - delta;
+              turning += delta;
+            }
+            prevAngle = angle;
+          }
+          prev = p;
+          if (Math.hypot(p.x - link.a.x, p.y - link.a.y) > 30 && Math.hypot(p.x - link.b.x, p.y - link.b.y) > 30) {
+            for (const q of routedSamples) {
+              if (Math.abs(p.x - q.x) < 7 && Math.abs(p.y - q.y) < 7) { crowding++; break; }
+            }
+          }
+          if (p.x < 2 || p.x > cW - 2 || p.y < 2 || p.y > cH - 2) hitCount += 0.2;
+          for (const [name, b] of Object.entries(boxes)) {
+            if (hitBoxes.has(name)) continue;
+            // the link's own modules are only obstacles away from its endpoints
+            if (own[name] && Math.hypot(p.x - own[name].x, p.y - own[name].y) < 18) continue;
+            const m = own[name] ? 2 : 8;
+            if (p.x > b.x - m && p.x < b.x + b.w + m && p.y > b.y - m && p.y < b.y + b.h + m) hitBoxes.add(name);
+          }
+        }
+      });
+      return { hits: hitBoxes.size + hitCount, length, crowding, turning };
+    }
+
+    function route(link) {
+      const nA = SIDES[link.fromSide].n;
+      const nB = SIDES[link.toSide].n;
+      const a = link.a;
+      const b = add(link.b, nB, 1);   // arrow tip lands on the edge
+      const lead = 16;                // leave / enter straight, perpendicular to the edge
+      const a1 = add(a, nA, lead);
+      const b1 = add(b, nB, lead);
+
+      const candidates = [[]];
+      gapX.forEach(x => gapY.forEach(y => candidates.push([{ x, y }])));
+      gapX.forEach(x => gapY.forEach(y1 => gapY.forEach(y2 => { if (y1 !== y2) candidates.push([{ x, y: y1 }, { x, y: y2 }]); })));
+      gapY.forEach(y => gapX.forEach(x1 => gapX.forEach(x2 => { if (x1 !== x2) candidates.push([{ x: x1, y }, { x: x2, y }]); })));
+
+      let best = null;
+      for (const way of candidates) {
+        const segs = splineSegments([a, a1, ...way, b1, b], nA, nB);
+        const m = measure(segs, link);
+        const score = m.hits * 100000 + m.length + way.length * 40 + m.crowding * 8 + m.turning * 90;
+        if (!best || score < best.score) best = { score, segs, way };
+        if (way.length === 0 && m.hits === 0 && m.crowding === 0) break;   // direct route is clear: keep it
+      }
+      const segs = best.segs;
+      segs.forEach(seg => { for (let i = 0; i <= 24; i++) routedSamples.push(bez(seg[0], seg[1], seg[2], seg[3], i / 24)); });
+      // label on the middle of the route
+      const mid = segs[Math.floor(segs.length / 2)];
+      const label = segs.length % 2 ? bez(mid[0], mid[1], mid[2], mid[3], 0.5) : mid[0];
+      return { segments: segs, label };
+    }
+
+    // 5) Draw (links sit under the modules). Shortest links are routed first so they keep
+    //    the direct paths and longer ones detour around them.
+    const linkLength = (l) => Math.hypot(l.b.x - l.a.x, l.b.y - l.a.y);
+    [...links].sort((p, q) => linkLength(p) - linkLength(q)).forEach(link => {
+      const { c } = link;
+      const fromName = c.fromName;
+      const toName = c.toName;
+      const flow = c.flow || 'Power';
+      const color = getOperationsFlowColor(flow);
+      const markerId = `arrowhead-${String(flow).replace(/[^A-Za-z0-9_-]/g, '_')}`;
+
+      if (!defs.querySelector(`#${markerId}`)) {
+        const marker = document.createElementNS(SVG_NS, 'marker');
+        marker.setAttribute('id', markerId);
+        marker.setAttribute('viewBox', '0 0 10 10');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '5');
+        marker.setAttribute('markerWidth', '10');
+        marker.setAttribute('markerHeight', '10');
+        marker.setAttribute('markerUnits', 'userSpaceOnUse');
+        marker.setAttribute('orient', 'auto');
+        marker.innerHTML = `<path d="M1 1L9 5L1 9z" fill="${color}"/>`;
+        defs.appendChild(marker);
+      }
+
+      const { segments, label } = route(link);
+      const d = `M ${segments[0][0].x} ${segments[0][0].y} ` +
+        segments.map(sg => `C ${sg[1].x} ${sg[1].y}, ${sg[2].x} ${sg[2].y}, ${sg[3].x} ${sg[3].y}`).join(' ');
+
+      const group = document.createElementNS(SVG_NS, 'g');
+      group.setAttribute('class', 'ops-link');
+      group.dataset.from = fromName;
+      group.dataset.to = toName;
+      group.style.setProperty('--flow', color);
+
+      const glow = document.createElementNS(SVG_NS, 'path');
+      glow.setAttribute('d', d);
+      glow.setAttribute('class', 'ops-link-glow');
+      glow.setAttribute('stroke', color);
+      group.appendChild(glow);
+
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('class', 'ops-link-line');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '2.2');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('marker-end', `url(#${markerId})`);
+      group.appendChild(path);
+
+      const pulse = document.createElementNS(SVG_NS, 'path');
+      pulse.setAttribute('d', d);
+      pulse.setAttribute('class', 'ops-link-pulse');
+      group.appendChild(pulse);
+
+      const sameSourcePower = conns.filter(other => other.fromName === fromName && isPowerFlow(other.flow));
+      if (!isPowerFlow(flow) || sameSourcePower.length === 1) {
+        const txt = document.createElementNS(SVG_NS, 'text');
+        txt.setAttribute('x', label.x);
+        txt.setAttribute('y', label.y - 7);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('class', 'ops-link-label');
+        txt.setAttribute('fill', color);
+        txt.textContent = flow;
+        group.appendChild(txt);
+      }
+      svgLayer.appendChild(group);
     });
   }
 
@@ -15155,6 +15422,160 @@ window.addEventListener('load', () => {
     update();
   })();
 </script>
+
+<!-- ===================== 2. Mission Network Activation — visual layer ===================== -->
+<style>
+  #activation .mna-panel {
+    border-radius: 16px;
+    border-color: rgba(160, 204, 255, 0.12);
+    background: linear-gradient(180deg, rgba(14, 24, 40, 0.92), rgba(9, 16, 28, 0.95));
+  }
+  #activation .mna-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  #activation .mna-panel-head .panel-title { margin-bottom: 0; }
+  #activation .mna-count { font-family: var(--mono); font-size: 11px; color: rgba(233, 242, 255, 0.55); white-space: nowrap; }
+  #activation .mna-count b { color: var(--accent); font-size: 13px; }
+  #activation .mna-hint { font-family: 'Inter', sans-serif; font-size: 10.5px; color: rgba(233, 242, 255, 0.45); }
+  #activation .mna-empty {
+    grid-column: 1 / -1; padding: 22px 12px; text-align: center; font-size: 12px;
+    color: var(--text3); border: 1px dashed var(--border2); border-radius: 12px;
+  }
+
+  /* Ignore-power switch */
+  #activation .mna-power {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 11px 13px;
+    border: 1px solid rgba(255, 213, 74, 0.22); border-radius: 12px;
+    background: linear-gradient(90deg, rgba(255, 213, 74, 0.08), rgba(255, 213, 74, 0.02));
+    cursor: pointer; transition: border-color 160ms ease;
+  }
+  #activation .mna-power:hover { border-color: rgba(255, 213, 74, 0.45); }
+  #activation .mna-power-icon {
+    display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px;
+    color: var(--team-gold); background: rgba(255, 213, 74, 0.12);
+  }
+  #activation .mna-power-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  #activation .mna-power-text { flex: 1; min-width: 0; }
+  #activation .mna-power-title { display: block; font-size: 11px; font-weight: 700; color: var(--team-gold); }
+  #activation .mna-power-hint { display: block; margin-top: 3px; font-size: 10px; line-height: 1.4; color: var(--text3); }
+  #activation .toggle { flex-shrink: 0; }
+  #activation .toggle-gold:checked { background: rgba(255, 213, 74, 0.18); border-color: var(--team-gold); }
+  #activation .toggle-gold:checked::after { background: var(--team-gold); }
+
+  /* System cards: colour + icon of the module class */
+  #activation .system-grid { gap: 10px; }
+  #activation .sys-card {
+    --cls: #8a94a6;
+    position: relative; overflow: hidden;
+    padding: 12px 12px 11px 15px; border-radius: 12px;
+    border: 1px solid rgba(160, 204, 255, 0.1);
+    background: rgba(255, 255, 255, 0.015);
+    opacity: 0.6; filter: saturate(0.4);
+    transition: opacity 180ms ease, filter 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  }
+  #activation .sys-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--cls); opacity: 0.35; transition: opacity 180ms ease;
+  }
+  #activation .sys-card.active {
+    opacity: 1; filter: none;
+    border-color: color-mix(in srgb, var(--cls) 45%, transparent);
+    background:
+      radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--cls) 12%, transparent), transparent 60%),
+      rgba(255, 255, 255, 0.02);
+    box-shadow: none;
+  }
+  #activation .sys-card.active::before { opacity: 1; }
+  #activation .sys-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--cls) 70%, transparent); opacity: 1; filter: none; }
+  #activation .sys-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  #activation .sys-icon {
+    display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px;
+    color: var(--cls); background: color-mix(in srgb, var(--cls) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cls) 35%, transparent);
+  }
+  #activation .mna-icon { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  #activation .sys-title { flex: 1; min-width: 0; }
+  #activation .sys-name { font-size: 12.5px; font-weight: 700; color: var(--text); overflow-wrap: break-word; }
+  #activation .sys-meta { margin-top: 2px; font-size: 10px; line-height: 1.4; color: var(--text3); }
+  #activation .sys-class { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  #activation .sys-class select {
+    width: 100%; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+    font-family: var(--mono); font-size: 10px; text-transform: none; letter-spacing: 0;
+    color: var(--cls); background: #07101a; border: 1px solid color-mix(in srgb, var(--cls) 30%, var(--border2));
+  }
+  #activation .sys-class select:focus { outline: none; border-color: var(--cls); }
+
+  #activation .mna-run { margin-top: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #activation .mna-run-btn { padding: 11px 22px; font-size: 13px; border-radius: 10px; }
+
+  /* Legend */
+  #activation .ops-legend { gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+  #activation .ops-legend .legend-class {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 6px; border-radius: 999px;
+    font-size: 10.5px; color: var(--cls); background: color-mix(in srgb, var(--cls) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cls) 28%, transparent);
+  }
+  #activation .ops-legend .legend-class .mna-icon { width: 12px; height: 12px; }
+  #activation .ops-legend .legend-sep { width: 1px; height: 16px; background: var(--border2); }
+  #activation .ops-legend .legend-flow { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text2); }
+  #activation .ops-legend .legend-line { width: 18px; height: 3px; border-radius: 2px; background: var(--flow); box-shadow: 0 0 6px var(--flow); }
+
+  /* Graph canvas: dotted "operations board" grid */
+  #activation .ops-graph {
+    border-color: rgba(160, 204, 255, 0.12);
+    background:
+      radial-gradient(circle, rgba(160, 204, 255, 0.10) 1px, transparent 1.4px) 0 0 / 22px 22px,
+      radial-gradient(circle at 20% 10%, rgba(0, 212, 255, 0.07), transparent 30%),
+      radial-gradient(circle at 80% 85%, rgba(255, 92, 108, 0.06), transparent 30%),
+      linear-gradient(180deg, #0b1119 0%, #080c13 100%);
+  }
+
+  /* Nodes */
+  #activation .node {
+    --cls: #8a94a6;
+    padding: 9px 10px 8px 12px; border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--cls) 55%, transparent);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--cls) 14%, transparent), transparent 70%),
+      rgba(12, 18, 29, 0.96);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4), inset 3px 0 0 var(--cls);
+    transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    cursor: default;
+  }
+  #activation .node.active { border-color: color-mix(in srgb, var(--cls) 55%, transparent); }
+  #activation .node .node-title { font-size: 11px; line-height: 1.25; color: var(--text); margin-bottom: 5px; overflow-wrap: break-word; }
+  #activation .node .node-icon { width: 10px; height: 10px; flex-shrink: 0; stroke-width: 2.4; }
+  #activation .node .node-tag {
+    display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 1px 5px 1px 4px; border-radius: 4px;
+    font-family: var(--mono); font-size: 8px; letter-spacing: 0; text-transform: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box;
+    color: var(--cls); background: color-mix(in srgb, var(--cls) 12%, transparent);
+  }
+  #activation .node.is-isolated { border-style: dashed; opacity: 0.62; }
+  #activation .node:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 3px 0 0 var(--cls), 0 0 0 1px var(--cls); }
+
+  /* Links: drawn under the modules, from edge to edge */
+  #activation svg.link-layer { z-index: 1; }
+  #activation .ops-link { transition: opacity 160ms ease; }
+  #activation .ops-link-glow { fill: none; stroke-width: 9; stroke-opacity: 0.12; stroke-linecap: round; }
+  #activation .ops-link-pulse {
+    fill: none; stroke: #fff; stroke-opacity: 0.35; stroke-width: 1.6; stroke-linecap: round;
+    stroke-dasharray: 1.5 22; animation: mna-flow 1.6s linear infinite;
+  }
+  #activation .ops-link-label {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    paint-order: stroke; stroke: #080c13; stroke-width: 4px; stroke-linejoin: round;
+  }
+  @keyframes mna-flow { to { stroke-dashoffset: -23.5; } }
+
+  /* Hover focus: highlight the module's flows, dim the rest */
+  #activation .ops-graph.has-focus .ops-link:not(.is-hot) { opacity: 0.12; }
+  #activation .ops-graph.has-focus .ops-link.is-hot .ops-link-glow { stroke-opacity: 0.3; }
+  #activation .ops-graph.has-focus .node:not(.is-hot) { opacity: 0.35; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #activation .ops-link-pulse { animation: none; stroke-opacity: 0; }
+    #activation .sys-card, #activation .node { transition: none; }
+  }
+</style>
 
 <!-- ===================== Digital Curation search ===================== -->
 <style>
