@@ -1258,6 +1258,151 @@ html:not(.fonts-ready) :is(.intro-lab, .intro-kicker, .intro-title, .intro-sub, 
 
 .intro-credit a { color: inherit; }
 
+/* GitHub token dialog (opened by the hero CTA) */
+.gh-token-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10001; /* above the top bar */
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(2, 6, 14, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.gh-token-modal[hidden] { display: none; }
+.gh-token-modal.is-open { opacity: 1; }
+
+.gh-token-card {
+  width: min(460px, 100%);
+  padding: 28px 28px 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(160, 204, 255, 0.2);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255, 213, 74, 0.1), transparent 60%),
+    linear-gradient(180deg, rgba(14, 26, 44, 0.98), rgba(7, 14, 26, 0.98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: var(--sans);
+  color: var(--text);
+  transform: translateY(14px) scale(0.98);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gh-token-modal.is-open .gh-token-card { transform: none; }
+
+.gh-token-card__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  border-radius: 15px;
+  color: #09111e;
+  background: linear-gradient(180deg, #ffe06d, #ffc420);
+  box-shadow: 0 10px 26px rgba(255, 196, 32, 0.3);
+}
+.gh-token-card__icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.gh-token-card__title {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #f4f8ff;
+  margin-bottom: 8px;
+}
+.gh-token-card__text { font-size: 13.5px; line-height: 1.6; color: rgba(233, 242, 255, 0.78); margin-bottom: 18px; }
+.gh-token-card__text code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--ice);
+  background: rgba(154, 215, 255, 0.1);
+}
+
+.gh-token-card__label {
+  display: block;
+  margin-bottom: 7px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(233, 242, 255, 0.6);
+}
+.gh-token-card__field {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(160, 204, 255, 0.24);
+  background: #0a1322;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.gh-token-card__field:focus-within { border-color: var(--team-blue); box-shadow: 0 0 0 3px rgba(87, 199, 255, 0.15); }
+.gh-token-card__field input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #f4f8ff;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.gh-token-card__reveal {
+  margin-right: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(233, 242, 255, 0.75);
+  font-size: 12px;
+  cursor: pointer;
+}
+.gh-token-card__reveal:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+.gh-token-card__status { min-height: 20px; margin: 10px 0 4px; font-size: 13px; line-height: 1.45; }
+.gh-token-card__status.is-error { color: #ff8a98; }
+.gh-token-card__status.is-ok { color: #7ee0b1; font-weight: 600; }
+.gh-token-card__status.is-busy { color: var(--ice); }
+
+.gh-token-card__hint { font-size: 12px; line-height: 1.55; color: rgba(233, 242, 255, 0.55); margin-bottom: 22px; }
+.gh-token-card__hint a { color: var(--team-gold); text-decoration: none; white-space: nowrap; }
+.gh-token-card__hint a:hover { text-decoration: underline; }
+
+.gh-token-card__actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
+.gh-token-card__skip {
+  padding: 11px 14px;
+  border: 0;
+  background: transparent;
+  color: rgba(233, 242, 255, 0.65);
+  font-size: 13px;
+  cursor: pointer;
+}
+.gh-token-card__skip:hover { color: #fff; }
+.gh-token-card__submit {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 226, 122, 0.95);
+  background: linear-gradient(180deg, #ffdf67, #ffc420);
+  color: #09111e;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 26px rgba(255, 196, 32, 0.25);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.gh-token-card__submit:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+.gh-token-card__submit:disabled { opacity: 0.6; cursor: wait; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-token-modal, .gh-token-card { transition: none; }
+}
+
 /* Partner logos under the hero CTA */
 .intro-partners {
   margin-top: 34px;
@@ -1483,7 +1628,7 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
         <h1 class="intro-title">ECLIPSE <span>2.0</span></h1>
         <p class="intro-sub">Digital Engineering Ecosystem — from requirements to mission simulation on the lunar surface.</p>
         <div class="intro-cta">
-          <button class="intro-btn" onclick="document.getElementById('scenario-entry').scrollIntoView({behavior:'smooth'})">Start building your mission now</button>
+          <button class="intro-btn" onclick="startMissionBuild()">Start building your mission now</button>
         </div>
         <div class="intro-partners">
           <span class="intro-partners__label">In partnership with</span>
@@ -1498,7 +1643,140 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
       <div class="intro-credit">Photo: <a href="https://www.nasa.gov/image-detail/amf-art002e009287/" target="_blank" rel="noopener">NASA / Artemis II crew</a></div>
     </section>
 
+    <!-- GitHub token gate, opened by "Start building your mission now" (moved to <body> by script) -->
+    <div class="gh-token-modal" id="ghTokenModal" role="dialog" aria-modal="true" aria-labelledby="ghTokenTitle" hidden>
+      <form class="gh-token-card" id="ghTokenForm" novalidate>
+        <div class="gh-token-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/></svg>
+        </div>
+        <h2 class="gh-token-card__title" id="ghTokenTitle">Connect to GitHub</h2>
+        <p class="gh-token-card__text">
+          ECLIPSE saves scenarios, CAD files and simulation runs to the
+          <code id="ghTokenRepo">GitHub repository</code>.
+          Enter a personal access token (classic) with write access to it.
+        </p>
+        <label class="gh-token-card__label" for="ghTokenInput">Personal access token</label>
+        <div class="gh-token-card__field">
+          <input id="ghTokenInput" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_…" required>
+          <button type="button" class="gh-token-card__reveal" id="ghTokenReveal" aria-label="Show token">Show</button>
+        </div>
+        <div class="gh-token-card__status" id="ghTokenStatus" role="status" aria-live="polite"></div>
+        <p class="gh-token-card__hint">
+          Kept only in this browser tab and cleared when you close it.
+          <a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=ECLIPSE%202.0" target="_blank" rel="noopener">Create a token&nbsp;↗</a>
+        </p>
+        <div class="gh-token-card__actions">
+          <button type="button" class="gh-token-card__skip" id="ghTokenSkip">Continue without token</button>
+          <button type="submit" class="gh-token-card__submit" id="ghTokenSubmit">Verify &amp; continue</button>
+        </div>
+      </form>
+    </div>
+
 <script>
+  // "Start building your mission now": ask for the GitHub token first (unless this tab already has one),
+  // verify it against the target repository, and store it under the 'gh_pat' key the rest of the page reads.
+  (function () {
+    const modal = document.getElementById('ghTokenModal');
+    if (!modal) return;
+    document.body.appendChild(modal); // out of .shell so no fade/stacking context applies to it
+
+    const form = document.getElementById('ghTokenForm');
+    const input = document.getElementById('ghTokenInput');
+    const status = document.getElementById('ghTokenStatus');
+    const submit = document.getElementById('ghTokenSubmit');
+    const reveal = document.getElementById('ghTokenReveal');
+    // GH_OWNER / GH_REPO are declared by the DES script further down the page.
+    const repo = () => (typeof GH_OWNER !== 'undefined' ? `${GH_OWNER}/${GH_REPO}` : 'abrunier3/ECLIPSE_2.0');
+    let lastFocus = null;
+
+    function goToScenario() {
+      document.getElementById('scenario-entry')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function setStatus(kind, message) {
+      status.className = `gh-token-card__status${kind ? ` is-${kind}` : ''}`;
+      status.textContent = message;
+    }
+
+    function open() {
+      lastFocus = document.activeElement;
+      document.getElementById('ghTokenRepo').textContent = repo();
+      setStatus('', '');
+      input.value = '';
+      modal.hidden = false;
+      requestAnimationFrame(() => modal.classList.add('is-open'));
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function close(thenScroll) {
+      modal.classList.remove('is-open');
+      setTimeout(() => {
+        modal.hidden = true;
+        lastFocus?.focus?.();
+        if (thenScroll) goToScenario();
+      }, 220);
+    }
+
+    window.startMissionBuild = function () {
+      if (sessionStorage.getItem('gh_pat')) goToScenario();
+      else open();
+    };
+
+    async function verify(token) {
+      const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
+      const [userRes, repoRes] = await Promise.all([
+        fetch('https://api.github.com/user', { headers }),
+        fetch(`https://api.github.com/repos/${repo()}`, { headers }),
+      ]);
+      if (userRes.status === 401) throw new Error('This token is invalid or has expired.');
+      if (repoRes.status === 404 || repoRes.status === 403) throw new Error(`This token cannot access ${repo()}.`);
+      if (!userRes.ok || !repoRes.ok) throw new Error(`GitHub answered ${userRes.ok ? repoRes.status : userRes.status}. Try again.`);
+      const [user, repoInfo] = await Promise.all([userRes.json(), repoRes.json()]);
+      // permissions.push reflects the account; classic tokens also list their own scopes in this header
+      const scopes = userRes.headers.get('X-OAuth-Scopes');
+      if (scopes !== null && !/\b(public_)?repo\b/.test(scopes)) {
+        throw new Error('This token is missing the "repo" scope. Create one with "repo" ticked.');
+      }
+      if (!repoInfo.permissions?.push) {
+        throw new Error(`@${user.login} has read-only access to ${repo()}: saving scenarios needs write access.`);
+      }
+      return user.login;
+    }
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const token = input.value.trim();
+      if (!token) { setStatus('error', 'Paste your token first.'); input.focus(); return; }
+      submit.disabled = true;
+      setStatus('busy', 'Checking with GitHub…');
+      try {
+        const login = await verify(token);
+        sessionStorage.setItem('gh_pat', token);
+        setStatus('ok', `Connected as @${login}`);
+        setTimeout(() => close(true), 700);
+      } catch (error) {
+        const offline = error instanceof TypeError; // fetch network failure
+        setStatus('error', offline ? 'Could not reach GitHub. Check your connection and try again.' : error.message);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    reveal.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      reveal.textContent = show ? 'Hide' : 'Show';
+      reveal.setAttribute('aria-label', show ? 'Hide token' : 'Show token');
+    });
+
+    // Skipping keeps the old behaviour: the page asks again when a GitHub write is needed.
+    document.getElementById('ghTokenSkip').addEventListener('click', () => close(true));
+    modal.addEventListener('click', event => { if (event.target === modal) close(false); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !modal.hidden) close(false);
+    });
+  })();
+
   // Release the hero text animations once fonts are loaded (fallback after 1.5 s on slow networks).
   (function () {
     const ready = () => document.documentElement.classList.add('fonts-ready');
