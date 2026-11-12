@@ -2573,6 +2573,39 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
       <div id="savedScenarioList" style="display:grid;gap:7px;"></div>
     </div>
 
+    <!-- Digital Curation library search (index built by DigitalCuration/scripts/export_web_index.py) -->
+    <div id="dcSearch" class="dc-search">
+      <div class="dc-search-head">
+        <div>
+          <div class="dc-search-title">Search the model library</div>
+          <div class="dc-search-sub">Semantic search powered by Digital Curation over ESMS metadata and file contents.</div>
+        </div>
+        <div id="dcSearchStatus" class="dc-search-status" aria-live="polite"></div>
+      </div>
+      <form class="dc-search-bar" role="search" onsubmit="event.preventDefault(); dcRunSearch();">
+        <svg class="dc-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="dcSearchInput" type="search" autocomplete="off" spellcheck="false"
+          placeholder="e.g. habitat oxygen generation, rover traverse energy, ISRU propellant…"
+          aria-label="Search the Digital Curation library" onfocus="dcWarmUp()">
+        <button id="dcSearchBtn" type="submit" class="btn btn-primary">Search</button>
+      </form>
+      <div class="dc-options">
+        <div class="dc-opt dc-opt-types">
+          <div class="dc-opt-label">File type</div>
+          <div id="dcTypeFilters" class="dc-type-filters" role="group" aria-label="Filter by file type">
+            <span class="dc-opt-hint">Loading types…</span>
+          </div>
+        </div>
+        <div class="dc-opt dc-opt-score">
+          <label class="dc-opt-label" for="dcMinScore">Minimum match <output id="dcMinScoreOut">0%</output></label>
+          <input id="dcMinScore" type="range" min="0" max="100" step="1" value="0" oninput="dcSetMinScore(this.value)">
+          <label class="dc-showall"><input id="dcShowAll" type="checkbox" onchange="dcApplyFilters()"> Show all matching results</label>
+        </div>
+      </div>
+      <div id="dcResultsInfo" class="dc-results-info" aria-live="polite"></div>
+      <div id="dcSearchResults" class="dc-results"></div>
+    </div>
+
     <div id="scenarioNameDialog" role="dialog" aria-modal="true" aria-labelledby="scenarioNameDialogTitle"
       style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;padding:18px;">
       <div style="width:min(520px,100%);background:#0d1420;border:1px solid var(--border2);border-radius:8px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,0.5);">
@@ -15112,6 +15145,347 @@ window.addEventListener('load', () => {
     window.addEventListener('resize', onScroll);
     window.addEventListener('load', update);
     update();
+  })();
+</script>
+
+<!-- ===================== Digital Curation search ===================== -->
+<style>
+  .dc-search {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(160, 204, 255, 0.14);
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(87, 199, 255, 0.08), transparent 55%),
+      linear-gradient(180deg, rgba(16, 27, 45, 0.92), rgba(9, 16, 28, 0.95));
+  }
+  .dc-search-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .dc-search-title { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; color: var(--team-blue); }
+  .dc-search-sub { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(233, 242, 255, 0.66); }
+  .dc-search-status { font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.6); text-align: right; }
+  .dc-search-bar {
+    position: relative; display: flex; gap: 8px; margin-top: 14px;
+  }
+  .dc-search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; fill: none; stroke: rgba(233, 242, 255, 0.5); stroke-width: 2; stroke-linecap: round; pointer-events: none;
+  }
+  .dc-search-bar input {
+    flex: 1; min-width: 0;
+    padding: 11px 12px 11px 38px;
+    background: #07101a; color: var(--text);
+    border: 1px solid var(--border2); border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .dc-search-bar input:focus { outline: none; border-color: var(--team-blue); box-shadow: 0 0 0 3px rgba(87, 199, 255, 0.15); }
+  .dc-search-bar .btn { padding: 0 18px; border-radius: 10px; }
+  .dc-search-bar .btn:disabled { opacity: 0.6; cursor: progress; }
+
+  .dc-options {
+    display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px;
+    margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid rgba(160, 204, 255, 0.08); background: rgba(255, 255, 255, 0.015);
+  }
+  .dc-opt-label { display: flex; justify-content: space-between; margin-bottom: 7px; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(233, 242, 255, 0.6); }
+  .dc-opt-label output { color: var(--team-blue); }
+  .dc-opt-hint { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(233, 242, 255, 0.45); }
+  .dc-type-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dc-type-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 9px; border-radius: 999px; cursor: pointer;
+    font-family: var(--mono); font-size: 10.5px; color: rgba(233, 242, 255, 0.75);
+    background: transparent; border: 1px solid rgba(160, 204, 255, 0.18);
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+  .dc-type-chip:hover { border-color: var(--c, var(--team-blue)); }
+  .dc-type-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #6c757d); }
+  .dc-type-chip .n { opacity: 0.55; }
+  .dc-type-chip[aria-pressed="true"] { color: #fff; border-color: var(--c, var(--team-blue)); background: color-mix(in srgb, var(--c, #57c7ff) 26%, transparent); }
+  .dc-opt-score input[type="range"] { width: 100%; accent-color: var(--team-blue); cursor: pointer; }
+  .dc-showall { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: 11.5px; color: rgba(233, 242, 255, 0.72); cursor: pointer; }
+  .dc-showall input { accent-color: var(--team-blue); }
+  .dc-results-info { margin-top: 10px; font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.55); }
+  .dc-results-info:empty { display: none; }
+  /* Results scroll inside the search panel instead of stretching the page */
+  .dc-results {
+    display: grid; gap: 8px; margin-top: 8px;
+    max-height: min(62vh, 640px); overflow-y: auto; overscroll-behavior: contain;
+    padding-right: 6px; scrollbar-width: thin; scrollbar-color: rgba(87, 199, 255, 0.45) transparent;
+  }
+  .dc-results::-webkit-scrollbar { width: 8px; }
+  .dc-results::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 8px; }
+  .dc-results::-webkit-scrollbar-thumb { background: rgba(87, 199, 255, 0.4); border-radius: 8px; }
+  .dc-results::-webkit-scrollbar-thumb:hover { background: rgba(87, 199, 255, 0.65); }
+  .dc-results:empty { display: none; }
+  .dc-result {
+    display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px;
+    padding: 12px 14px; border-radius: 12px;
+    border: 1px solid rgba(160, 204, 255, 0.1); background: rgba(255, 255, 255, 0.02);
+  }
+  .dc-result:hover { border-color: rgba(87, 199, 255, 0.35); }
+  .dc-score { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--team-blue); }
+  .dc-score-bar { height: 3px; margin-top: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .dc-score-bar span { display: block; height: 100%; background: var(--team-blue); }
+  .dc-r-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .dc-type { font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; color: #fff; background: var(--c, #6c757d); }
+  .dc-folder { margin-top: 2px; font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.5); overflow-wrap: anywhere; }
+  .dc-summary { margin-top: 6px; font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.5; color: rgba(233, 242, 255, 0.78); }
+  .dc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .dc-tag { font-family: 'Inter', sans-serif; font-size: 10px; padding: 2px 7px; border-radius: 999px; color: var(--ice); background: var(--ice-dim); }
+  .dc-links { display: flex; gap: 12px; margin-top: 8px; font-family: var(--mono); font-size: 10px; }
+  .dc-links a { color: var(--team-blue); text-decoration: none; }
+  .dc-links a:hover { text-decoration: underline; }
+  .dc-more { justify-self: center; margin-top: 4px; }
+  .dc-empty { padding: 14px; text-align: center; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(233, 242, 255, 0.6); }
+  @media (max-width: 760px) {
+    .dc-search { padding: 14px; }
+    .dc-search-bar .btn { padding: 0 12px; }
+    .dc-options { grid-template-columns: 1fr; gap: 14px; }
+    .dc-result { grid-template-columns: 1fr; gap: 6px; }
+    .dc-score-col { display: flex; align-items: center; gap: 8px; }
+    .dc-score-bar { flex: 1; margin-top: 0; }
+  }
+</style>
+<script>
+  /* Digital Curation search
+     - Index: DigitalCuration/web/search_index.json (built offline by
+       DigitalCuration/scripts/export_web_index.py with all-MiniLM-L6-v2).
+     - The query is embedded in the browser with the same model (transformers.js);
+       documents are ranked by cosine similarity (best of metadata/content vectors)
+       plus a small boost for exact word matches in title / keywords.
+     - If the model cannot load (offline), it falls back to keyword search. */
+  (function () {
+    const DC_BASE = 'DigitalCuration/';
+    const DC_INDEX_URL = DC_BASE + 'web/search_index.json';
+    // Same index as a script: <script src> works on file:// (double-click), fetch() does not
+    const DC_INDEX_SCRIPT = DC_BASE + 'web/search_index.js';
+    const DC_TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+    const PAGE_SIZE = 8;
+
+    let indexPromise = null;
+    let embedderPromise = null;
+    let semanticAvailable = true;
+    let lastScored = [];   // every document ranked for the current query
+    let lastResults = [];  // lastScored after file-type / score filters
+    let lastQuery = '';
+    let shown = 0;
+    const selectedTypes = new Set();  // empty = all types
+    let minScore = 0;                 // percent
+
+    // Same colours as the Digital Curation Streamlit app (scripts/streamlit_search.py)
+    const TYPE_COLORS = {
+      pdf: '#d9534f', yaml: '#0275d8', yml: '#0275d8', txt: '#5cb85c', m: '#6f42c1', docx: '#f0ad4e',
+      csv: '#20c997', xlsx: '#17a2b8', py: '#3776ab', mdzip: '#e83e8c', mat: '#b8860b', jmp: '#708090',
+      asv: '#8a8f98', json: '#9acd32', sldprt: '#ff7f50', sldasm: '#ff6347', step: '#8a2be2', stp: '#8a2be2',
+      iges: '#ff69b4', igs: '#ff69b4', stl: '#2e8b57', obj: '#1e90ff', dwg: '#2f4f4f', dxf: '#708090',
+    };
+    const typeColor = (t) => TYPE_COLORS[t] || '#6c757d';
+    const pctOf = (score) => Math.max(0, Math.min(100, Math.round(score * 100)));
+
+    function buildTypeFilters(idx) {
+      const box = $('dcTypeFilters');
+      if (!box || box.dataset.ready) return;
+      const counts = {};
+      idx.documents.forEach((d) => { const t = d.type || 'other'; counts[t] = (counts[t] || 0) + 1; });
+      const types = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+      box.innerHTML = '<button type="button" class="dc-type-chip" data-type="" aria-pressed="true" onclick="dcToggleType(\'\')">All <span class="n">' + idx.count + '</span></button>' +
+        types.map((t) => '<button type="button" class="dc-type-chip" data-type="' + esc(t) + '" aria-pressed="false" style="--c:' + typeColor(t) + '" onclick="dcToggleType(\'' + esc(t) + '\')">' +
+          '<span class="dot"></span>.' + esc(t) + ' <span class="n">' + counts[t] + '</span></button>').join('');
+      box.dataset.ready = '1';
+    }
+
+    window.dcToggleType = function (t) {
+      if (!t) selectedTypes.clear();
+      else if (selectedTypes.has(t)) selectedTypes.delete(t);
+      else selectedTypes.add(t);
+      document.querySelectorAll('#dcTypeFilters .dc-type-chip').forEach((chip) => {
+        const ct = chip.dataset.type;
+        chip.setAttribute('aria-pressed', String(ct ? selectedTypes.has(ct) : selectedTypes.size === 0));
+      });
+      dcApplyFilters();
+    };
+
+    window.dcSetMinScore = function (v) {
+      minScore = Number(v) || 0;
+      $('dcMinScoreOut').textContent = minScore + '%';
+      dcApplyFilters();
+    };
+
+    window.dcApplyFilters = function () {
+      if (!lastQuery) return;
+      lastResults = lastScored.filter((r) =>
+        (selectedTypes.size === 0 || selectedTypes.has(r.doc.type || 'other')) && pctOf(r.score) >= minScore);
+      shown = 0;
+      const info = $('dcResultsInfo');
+      const filters = [];
+      if (selectedTypes.size) filters.push([...selectedTypes].map((t) => '.' + t).join(', '));
+      if (minScore > 0) filters.push('≥ ' + minScore + '%');
+      info.textContent = lastResults.length + ' result' + (lastResults.length === 1 ? '' : 's') + ' for “' + lastQuery + '”' +
+        (filters.length ? ' · ' + filters.join(' · ') : '');
+      $('dcSearchResults').scrollTop = 0;  // new query / filter: back to the best match
+      if (!lastResults.length) {
+        $('dcSearchResults').innerHTML = '<div class="dc-empty">No document matches these filters. Try lowering the minimum match or selecting more file types.</div>';
+      } else {
+        renderPage();
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const setStatus = (msg) => { const el = $('dcSearchStatus'); if (el) el.textContent = msg || ''; };
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fileUrl = (p) => DC_BASE + String(p).split('/').map(encodeURIComponent).join('/');
+    const words = (s) => (String(s || '').toLowerCase().match(/[a-z0-9À-ɏ]+/g) || []).filter((w) => w.length > 1);
+
+    function loadIndexScript() {
+      if (window.DC_SEARCH_INDEX) return Promise.resolve(window.DC_SEARCH_INDEX);
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = DC_INDEX_SCRIPT;
+        s.onload = () => (window.DC_SEARCH_INDEX ? resolve(window.DC_SEARCH_INDEX) : reject(new Error('empty index script')));
+        s.onerror = () => { s.remove(); reject(new Error('cannot load ' + DC_INDEX_SCRIPT)); };
+        document.head.appendChild(s);
+      });
+    }
+
+    function loadIndex() {
+      if (!indexPromise) {
+        indexPromise = loadIndexScript()
+          .catch(() => fetch(DC_INDEX_URL).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }))
+          .then((idx) => {
+            idx.documents.forEach((d) => {
+              d._title = new Set(words(d.title + ' ' + d.file));
+              d._tags = new Set(words((d.keywords || []).join(' ') + ' ' + d.folder));
+              d._body = (d.summary + ' ' + d.excerpt).toLowerCase();
+            });
+            setStatus(idx.count + ' documents indexed');
+            buildTypeFilters(idx);
+            return idx;
+          })
+          .catch((err) => { indexPromise = null; throw err; });
+      }
+      return indexPromise;
+    }
+
+    function loadEmbedder(modelName) {
+      if (!embedderPromise) {
+        embedderPromise = import(DC_TRANSFORMERS_URL).then(({ pipeline, env }) => {
+          env.allowLocalModels = false;
+          return pipeline('feature-extraction', modelName);
+        });
+      }
+      return embedderPromise;
+    }
+
+    // Start downloading the index and the model as soon as the user focuses the bar
+    window.dcWarmUp = function () {
+      loadIndex().then((idx) => loadEmbedder(idx.browser_model)).catch(() => {});
+    };
+
+    // Load the (local) index once the page is ready so the file-type filters are populated;
+    // the heavier model is only fetched when the user focuses the search bar.
+    window.addEventListener('load', () => {
+      loadIndex().catch(() => {
+        const box = $('dcTypeFilters');
+        if (box) box.innerHTML = '<span class="dc-opt-hint">Index not found: run DigitalCuration/scripts/export_web_index.py</span>';
+      });
+    });
+
+    function lexicalScore(doc, qWords) {
+      if (!qWords.length) return 0;
+      let hit = 0;
+      qWords.forEach((w) => {
+        if (doc._title.has(w)) hit += 1;
+        else if (doc._tags.has(w)) hit += 0.7;
+        else if (doc._body.includes(w)) hit += 0.4;
+      });
+      return hit / qWords.length;
+    }
+
+    async function rank(query) {
+      const idx = await loadIndex();
+      const qWords = words(query);
+      let qVec = null;
+      if (semanticAvailable) {
+        try {
+          if (!embedderPromise) setStatus('Loading search model (first time only)…');
+          const embed = await loadEmbedder(idx.browser_model);
+          const out = await embed(query, { pooling: 'mean', normalize: true });
+          qVec = out.data;
+        } catch (err) {
+          console.warn('[DigitalCuration] semantic model unavailable, using keyword search', err);
+          semanticAvailable = false;
+          embedderPromise = null;
+        }
+      }
+      const scored = idx.documents.map((doc) => {
+        const lex = lexicalScore(doc, qWords);
+        let sem = 0;
+        if (qVec) {
+          for (const v of doc.vectors) {
+            let dot = 0;
+            for (let i = 0; i < v.length; i++) dot += v[i] * qVec[i];
+            if (dot > sem) sem = dot;
+          }
+        }
+        return { doc, score: qVec ? sem + 0.15 * lex : lex };
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const filtered = qVec ? scored : scored.filter((r) => r.score > 0);
+      setStatus(idx.count + ' documents · ' + (qVec ? 'semantic search' : 'keyword search (model offline)'));
+      return filtered;
+    }
+
+    function renderResult({ doc, score }) {
+      const pct = pctOf(score);
+      const tags = (doc.keywords || []).slice(0, 6).map((k) => '<span class="dc-tag">' + esc(k) + '</span>').join('');
+      const links = [
+        doc.path ? '<a href="' + esc(fileUrl(doc.path)) + '" target="_blank" rel="noopener">Open file ↗</a>' : '',
+        doc.metadata_path ? '<a href="' + esc(fileUrl(doc.metadata_path)) + '" target="_blank" rel="noopener">ESMS metadata ↗</a>' : '',
+      ].join('');
+      return '<div class="dc-result">' +
+        '<div class="dc-score-col"><div class="dc-score">' + pct + '%</div><div class="dc-score-bar"><span style="width:' + pct + '%"></span></div></div>' +
+        '<div style="min-width:0;">' +
+          '<div class="dc-r-title">' + esc(doc.title) + (doc.type ? '<span class="dc-type" style="--c:' + typeColor(doc.type) + '">.' + esc(doc.type) + '</span>' : '') + '</div>' +
+          '<div class="dc-folder">' + esc((doc.folder ? doc.folder + '/' : '') + doc.file) + '</div>' +
+          (doc.summary ? '<div class="dc-summary">' + esc(doc.summary) + '</div>' : '') +
+          (tags ? '<div class="dc-tags">' + tags + '</div>' : '') +
+          (links ? '<div class="dc-links">' + links + '</div>' : '') +
+        '</div></div>';
+    }
+
+    function renderPage() {
+      const box = $('dcSearchResults');
+      const showAll = $('dcShowAll') && $('dcShowAll').checked;
+      const next = showAll ? lastResults : lastResults.slice(0, shown + PAGE_SIZE);
+      shown = next.length;
+      box.innerHTML = next.map(renderResult).join('') +
+        (shown < lastResults.length ? '<button type="button" class="btn dc-more" onclick="dcShowMore()">Show more results</button>' : '');
+    }
+    window.dcShowMore = renderPage;
+
+    window.dcRunSearch = async function () {
+      const input = $('dcSearchInput');
+      const btn = $('dcSearchBtn');
+      const box = $('dcSearchResults');
+      const query = (input.value || '').trim();
+      if (!query) { box.innerHTML = ''; $('dcResultsInfo').textContent = ''; lastQuery = ''; return; }
+      btn.disabled = true;
+      btn.textContent = 'Searching…';
+      try {
+        lastScored = await rank(query);
+        lastQuery = query;
+        dcApplyFilters();
+      } catch (err) {
+        console.error('[DigitalCuration] search failed', err);
+        box.innerHTML = '<div class="dc-empty">Search index unavailable (' + esc(err.message) + '). ' +
+          'Make sure ' + esc(DC_INDEX_SCRIPT) + ' exists (run DigitalCuration/scripts/export_web_index.py).</div>';
+        setStatus('');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Search';
+      }
+    };
   })();
 </script>
 </html>

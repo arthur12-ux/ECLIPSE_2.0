@@ -109,6 +109,20 @@ Distribution and next steps
 -------------------------
 If you plan to distribute the tool to users who are not comfortable running commands, I can prepare several packaging options: a single run-all script that automates environment setup and runs the pipeline; a Docker image that bundles Python, the dependencies, and prebuilt index artifacts; or a packaged executable for Windows. Each option has trade-offs (ease of use vs. size and maintainability). Tell me which distribution format you prefer and whether you want `storage/` and `metadata/` pre-populated in the distribution.
 
+Search from the ECLIPSE web page
+--------------------------------
+The "Search the model library" bar in the Mission Scenario section of `ScenarioIndex.html` runs entirely in the browser. It reads a pre-built index, `web/search_index.json`, and embeds the user's query with the same `all-MiniLM-L6-v2` model (via transformers.js). No Streamlit or Python server is needed at search time.
+
+Rebuild the index whenever files in `data/` or `metadata/` change (macOS/Linux shown; on Windows use `.venv\Scripts\python.exe`):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install sentence-transformers pyyaml pandas openpyxl pypdf python-docx
+.venv/bin/python scripts/export_web_index.py
+```
+
+To index another library, pass `--data-dir` and `--meta-dir` (and optionally `--out`). The script writes `web/search_index.json` and the same data as `web/search_index.js`; commit both. The page loads the `.js` copy through a `<script>` tag, so search also works when `ScenarioIndex.html` is opened by double-click (`file://`), where browsers block `fetch`.
+
 Run with Docker Compose
 -----------------------
 If you prefer to run the product inside containers, `docker compose` offers a convenient, repeatable way to build and run the application. A `docker-compose.yml` is included in this repository. The general steps are:
