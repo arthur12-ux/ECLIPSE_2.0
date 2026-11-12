@@ -111,17 +111,19 @@ If you plan to distribute the tool to users who are not comfortable running comm
 
 Search from the ECLIPSE web page
 --------------------------------
-The "Search the model library" bar in the Mission Scenario section of `ScenarioIndex.html` runs entirely in the browser. It reads a pre-built index, `web/search_index.json`, and embeds the user's query with the same `all-MiniLM-L6-v2` model (via transformers.js). No Streamlit or Python server is needed at search time.
+The "Search the model library" bar in the Mission Scenario section of `ScenarioIndex.html` runs entirely in the browser. It reads a pre-built index, `web/search_index.json`, and embeds the user's query with the same `all-MiniLM-L6-v2` model (via transformers.js, full-precision weights). No Streamlit or Python server is needed at search time.
+
+`export_web_index.py` reuses `scripts/build_index.py` (same entries, same text, same embeddings) and the page scores with cosine similarity, so results and scores are the same as in the Streamlit app (to ±0.001), provided both indexes were built from the same `data/` and `metadata/`. If the two disagree, rebuild both: `python scripts/build_index.py` and `python scripts/export_web_index.py`.
 
 Rebuild the index whenever files in `data/` or `metadata/` change (macOS/Linux shown; on Windows use `.venv\Scripts\python.exe`):
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install sentence-transformers pyyaml pandas openpyxl pypdf python-docx
+.venv/bin/pip install sentence-transformers scikit-learn pyyaml pandas openpyxl pypdf python-docx
 .venv/bin/python scripts/export_web_index.py
 ```
 
-To index another library, pass `--data-dir` and `--meta-dir` (and optionally `--out`). The script writes `web/search_index.json` and the same data as `web/search_index.js`; commit both. The page loads the `.js` copy through a `<script>` tag, so search also works when `ScenarioIndex.html` is opened by double-click (`file://`), where browsers block `fetch`.
+The library folders are the ones used by `build_index.py` (`DATA_DIR`, `META_DIR`); change them there to index another library. The script writes `web/search_index.json` and the same data as `web/search_index.js`; commit both. The page loads the `.js` copy through a `<script>` tag, so search also works when `ScenarioIndex.html` is opened by double-click (`file://`), where browsers block `fetch`.
 
 Run with Docker Compose
 -----------------------

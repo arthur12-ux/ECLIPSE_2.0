@@ -1,32 +1,35 @@
 """scripts/export_web_index.py
 
-Build a browser-ready semantic search index for the ECLIPSE web page.
+Export the Digital Curation search index for the ECLIPSE web page
+(ScenarioIndex.html → Mission Scenario → "Search the model library").
 
-For every artifact in the data library it gathers:
-  * the ESMS metadata YAML (title, description, keywords, all text fields),
-  * a text excerpt of the file itself (when the format is readable),
-and embeds them with the same model used by the rest of digitalCuration
-(sentence-transformers/all-MiniLM-L6-v2, normalized). The result is a single
-JSON file that ScenarioIndex.html loads; the page embeds the user's query in
-the browser with the same model (transformers.js) and ranks by cosine.
-A copy wrapped as JavaScript (search_index.js) is written next to it so the
-page also works when opened directly from disk (file://).
+The index is built with exactly the same logic as the Streamlit app's index
+(`scripts/build_index.py`): same entries (one per ESMS metadata YAML, plus one per
+raw file without metadata), same text per entry, same model
+(all-MiniLM-L6-v2), same normalized embeddings. The page embeds the query with
+the same model in the browser (transformers.js, full-precision weights) and
+scores with cosine similarity, i.e. the `1 - cosine distance` score shown by
+`scripts/streamlit_search.py`. Rankings and scores therefore match the
+Streamlit app (to ~±0.001).
 
-Each document gets two vectors (metadata + file content); the page scores a
-document by the best of the two.
+Only display fields (title, summary, tags, links) are added on top; they do not
+affect ranking.
 
-Usage (from the DigitalCuration folder):
+Outputs (in web/):
+    search_index.json   the index
+    search_index.js     same data as `window.DC_SEARCH_INDEX=...;` so the page
+                        also works when opened from disk (file://), where
+                        browsers block fetch() but allow <script src>.
+
+Usage (from anywhere):
     .venv/bin/python scripts/export_web_index.py
-    .venv/bin/python scripts/export_web_index.py --data-dir ./data --meta-dir ./metadata/data --out ./web/search_index.json
-
-To search another library later, point --data-dir / --meta-dir to it.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import logging
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -34,64 +37,28 @@ from pathlib import Path
 
 import yaml
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-TEXT_EXT = {".txt", ".md", ".py", ".m", ".yaml", ".yml", ".json"}
-SKIP_KEYS = {"file_path", "rel_path", "file_name", "access_control", "access control"}
-NOISE_VALUES = {"not applicable", "n/a", "na", "tbd", "none", "public", "unknown", "-", ""}
-CONTENT_CHARS = 2000
+ROOT = Path(__file__).resolve().parent.parent  # DigitalCuration/
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import build_index as bi  # noqa: E402  (the Streamlit index builder: single source of truth)
+
 SUMMARY_CHARS = 400
 MAX_KEYWORDS = 12
-
-logging.getLogger("pypdf").setLevel(logging.ERROR)  # silence font-encoding chatter
+SKIP_KEYS = {"file_path", "rel_path", "file_name", "access_control", "access control"}
+NOISE_VALUES = {"not applicable", "n/a", "na", "tbd", "none", "public", "unknown", "-", ""}
 
 
 # --------------------------------------------------------------------------- #
-# File text extraction (same formats as src/ingest.py)
+# Display-only helpers (do not influence ranking)
 # --------------------------------------------------------------------------- #
-def read_text(fp: Path) -> str:
-    ext = fp.suffix.lower()
-    try:
-        if ext in TEXT_EXT:
-            return fp.read_text(encoding="utf-8", errors="ignore")
-        if ext == ".csv":
-            import pandas as pd
-            return pd.read_csv(fp, nrows=200).to_csv(index=False)
-        if ext == ".xlsx":
-            import pandas as pd
-            return pd.read_excel(fp, nrows=100).to_csv(index=False)
-        if ext == ".pdf":
-            from pypdf import PdfReader
-            reader = PdfReader(str(fp))
-            out = []
-            for page in reader.pages[:5]:
-                out.append(page.extract_text() or "")
-                if sum(map(len, out)) > CONTENT_CHARS * 2:
-                    break
-            return "\n".join(out)
-        if ext == ".docx":
-            from docx import Document as Docx
-            return "\n".join(p.text for p in Docx(str(fp)).paragraphs)
-    except Exception as exc:  # unreadable file: metadata alone will be used
-        print(f"  ! could not read {fp.name}: {exc}", file=sys.stderr)
-    return ""
-
-
 def clean(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
 
 
-# --------------------------------------------------------------------------- #
-# ESMS YAML walking (handles both ESMS layouts present in metadata/)
-# --------------------------------------------------------------------------- #
-def norm_key(k) -> str:
-    return str(k).strip().lower().replace("-", "_")
-
-
 def walk(node, key_path=()):
-    """Yield (key_path, string) for every leaf string in a YAML tree."""
     if isinstance(node, dict):
         for k, v in node.items():
-            yield from walk(v, key_path + (norm_key(k),))
+            yield from walk(v, key_path + (str(k).strip().lower().replace("-", "_"),))
     elif isinstance(node, list):
         for item in node:
             yield from walk(item, key_path + ("[]",))
@@ -99,9 +66,9 @@ def walk(node, key_path=()):
         yield key_path, str(node)
 
 
-def extract_metadata(meta: dict) -> dict:
-    summary, texts, keywords = "", [], []
-    seen_text, seen_kw = set(), set()
+def display_fields(meta: dict) -> tuple[str, list[str]]:
+    """First description found + short list values usable as tags."""
+    summary, keywords, seen = "", [], set()
     for path, value in walk(meta):
         named = [k for k in path if k != "[]"]
         last = named[-1] if named else ""
@@ -112,125 +79,83 @@ def extract_metadata(meta: dict) -> dict:
             continue
         if not summary and "description" in last and len(value) > 20:
             summary = value
-        if value.lower() not in seen_text:
-            seen_text.add(value.lower())
-            texts.append(value)
-        # short values held in lists (domains, methods, focus areas...) make good tags
-        if path and path[-1] == "[]" and 2 < len(value) <= 40 and value.lower() not in seen_kw:
-            seen_kw.add(value.lower())
+        if path and path[-1] == "[]" and 2 < len(value) <= 40 and value.lower() not in seen:
+            seen.add(value.lower())
             keywords.append(value)
     if len(summary) > SUMMARY_CHARS:
         summary = summary[: SUMMARY_CHARS - 1].rsplit(" ", 1)[0] + "…"
-    return {"summary": summary, "text": " ".join(texts), "keywords": keywords[:MAX_KEYWORDS]}
+    return summary, keywords[:MAX_KEYWORDS]
 
 
-# --------------------------------------------------------------------------- #
-# Library discovery
-# --------------------------------------------------------------------------- #
-def find_data_file(meta_file: Path, meta: dict, meta_dir: Path, data_dir: Path) -> Path | None:
-    """metadata/data/<sub>/<stem>.yaml  <->  data/<sub>/<file_name>."""
-    sub = meta_file.parent.relative_to(meta_dir)
-    name = meta.get("file_name")
-    if name:
-        cand = data_dir / sub / name
-        if cand.exists():
-            return cand
-    matches = sorted((data_dir / sub).glob(meta_file.stem + ".*"))
-    return matches[0] if matches else None
-
-
-def collect(data_dir: Path, meta_dir: Path) -> list[dict]:
-    docs, used = [], set()
-    for meta_file in sorted(meta_dir.rglob("*.y*ml")):
+def describe(entry: dict) -> dict:
+    """Display info for one build_index entry, mirroring streamlit_search.py."""
+    src = Path(entry["source"])
+    is_yaml = src.suffix.lower() in (".yaml", ".yml")
+    raw = bi.raw_for_yaml(src) if is_yaml else src
+    meta = {}
+    if is_yaml:
         try:
-            meta = yaml.safe_load(meta_file.read_text(encoding="utf-8", errors="ignore")) or {}
-        except yaml.YAMLError as exc:
-            print(f"  ! bad YAML {meta_file}: {exc}", file=sys.stderr)
-            continue
+            meta = yaml.safe_load(src.read_text(encoding="utf-8", errors="ignore")) or {}
+        except yaml.YAMLError:
+            meta = {}
         if not isinstance(meta, dict):
-            continue
-        data_file = find_data_file(meta_file, meta, meta_dir, data_dir)
-        if data_file:
-            used.add(data_file.resolve())
-        docs.append({"meta_file": meta_file, "meta": meta, "data_file": data_file})
-
-    # artifacts that have no metadata yet are still searchable through their content
-    for fp in sorted(data_dir.rglob("*")):
-        if fp.is_file() and fp.resolve() not in used and not fp.name.startswith((".", "~$")):
-            docs.append({"meta_file": None, "meta": {}, "data_file": fp})
-    return docs
+            meta = {}
+    shown = raw if raw is not None else src
+    # Same title precedence as the Streamlit app
+    title = meta.get("model_title") or meta.get("title") or meta.get("file_name") or shown.name
+    summary, keywords = display_fields(meta)
+    try:
+        folder = shown.parent.relative_to(bi.DATA_DIR).as_posix()
+    except ValueError:
+        folder = shown.parent.as_posix()
+    excerpt = ""
+    if not summary and raw is not None:
+        excerpt = clean(bi.read_raw_text(raw))[:200]
+    return {
+        "title": clean(str(title)),
+        "file": shown.name,
+        "type": shown.suffix.lstrip(".").lower(),
+        "folder": "" if folder == "." else folder,
+        "summary": summary or excerpt,
+        "keywords": keywords,
+        "path": raw.as_posix() if raw is not None else None,
+        "metadata_path": src.as_posix() if is_yaml else None,
+        "source": src.as_posix(),
+    }
 
 
 # --------------------------------------------------------------------------- #
 def main() -> None:
-    root = Path(__file__).resolve().parent.parent
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--data-dir", default=str(root / "data"))
-    ap.add_argument("--meta-dir", default=str(root / "metadata" / "data"))
-    ap.add_argument("--out", default=str(root / "web" / "search_index.json"))
-    ap.add_argument("--base", default=str(root),
-                    help="Paths in the index are written relative to this folder (default: DigitalCuration/)")
+    ap.add_argument("--out", default=str(ROOT / "web" / "search_index.json"))
     args = ap.parse_args()
+    out = Path(args.out).resolve()
 
-    data_dir, meta_dir, out = Path(args.data_dir).resolve(), Path(args.meta_dir).resolve(), Path(args.out).resolve()
-    base = Path(args.base).resolve()
+    # build_index.py uses paths relative to the DigitalCuration folder
+    os.chdir(ROOT)
 
-    def rel(p: Path | None) -> str | None:
-        if p is None:
-            return None
-        try:
-            return p.resolve().relative_to(base).as_posix()
-        except ValueError:
-            return p.resolve().as_posix()
+    entries = bi.gather_entries()
+    if not entries:
+        raise SystemExit("No documents found in ./metadata or ./data.")
+    print(f"Indexing {len(entries)} entries exactly like scripts/build_index.py …")
 
-    print(f"Collecting artifacts from {data_dir} (metadata: {meta_dir})")
-    raw = collect(data_dir, meta_dir)
-
-    documents, meta_texts, content_texts = [], [], []
-    for item in raw:
-        meta, data_file, meta_file = item["meta"], item["data_file"], item["meta_file"]
-        info = extract_metadata(meta)
-        name = (data_file.name if data_file else meta.get("file_name")) or meta_file.stem
-        title = clean(str(meta.get("title") or Path(name).stem))
-        folder_src = data_file.parent.relative_to(data_dir) if data_file else meta_file.parent.relative_to(meta_dir)
-        folder = "" if str(folder_src) == "." else folder_src.as_posix()
-        content = clean(read_text(data_file))[:CONTENT_CHARS] if data_file else ""
-
-        documents.append({
-            "id": len(documents),
-            "title": title,
-            "file": name,
-            "type": Path(name).suffix.lstrip(".").lower(),
-            "folder": folder,
-            "summary": info["summary"] or content[:200],
-            "keywords": info["keywords"],
-            "path": rel(data_file),
-            "metadata_path": rel(meta_file),
-            "excerpt": content[:300],
-        })
-        # Title first: MiniLM truncates long inputs (~256 tokens)
-        head = f"{title}. {folder.replace('/', ' ')}. {info['summary']} {' , '.join(info['keywords'])}"
-        meta_texts.append(clean(f"{head} {info['text']}"))
-        content_texts.append(clean(f"{title}. {content}") if content else "")
-
-    print(f"Embedding {len(documents)} documents with {MODEL_NAME} …")
     from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer(MODEL_NAME)
-    meta_emb = model.encode(meta_texts, normalize_embeddings=True, batch_size=32, show_progress_bar=True)
-    has_content = [i for i, t in enumerate(content_texts) if t]
-    content_emb = model.encode([content_texts[i] for i in has_content], normalize_embeddings=True,
-                               batch_size=32, show_progress_bar=True) if has_content else []
+    model = SentenceTransformer(bi.MODEL_NAME)
+    embs = model.encode([e["text"] for e in entries], batch_size=32,
+                        show_progress_bar=True, normalize_embeddings=True)
 
-    round4 = lambda v: [round(float(x), 4) for x in v]
-    for i, doc in enumerate(documents):
-        doc["vectors"] = [round4(meta_emb[i])]
-    for j, i in enumerate(has_content):
-        documents[i]["vectors"].append(round4(content_emb[j]))
+    documents = []
+    for i, (entry, vec) in enumerate(zip(entries, embs)):
+        doc = {"id": i, **describe(entry)}
+        doc["vector"] = [round(float(x), 5) for x in vec]
+        documents.append(doc)
 
     payload = {
-        "model": MODEL_NAME,
-        "browser_model": "Xenova/all-MiniLM-L6-v2",
-        "dim": int(meta_emb.shape[1]),
+        "model": f"sentence-transformers/{bi.MODEL_NAME}",
+        "browser_model": f"Xenova/{bi.MODEL_NAME}",
+        "browser_quantized": False,  # full-precision weights → same vectors as Python
+        "scoring": "cosine similarity (= 1 - cosine distance, as in streamlit_search.py)",
+        "dim": int(embs.shape[1]),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "count": len(documents),
         "documents": documents,
@@ -238,11 +163,8 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     out.write_text(data, encoding="utf-8")
-    # Same index wrapped in a script: browsers block fetch() on file:// pages but
-    # allow <script src>, so ScenarioIndex.html also works when opened by double-click.
-    out_js = out.with_suffix(".js")
-    out_js.write_text("window.DC_SEARCH_INDEX=" + data + ";\n", encoding="utf-8")
-    print(f"Wrote {out} and {out_js.name} ({out.stat().st_size / 1e6:.2f} MB, {len(documents)} documents)")
+    out.with_suffix(".js").write_text("window.DC_SEARCH_INDEX=" + data + ";\n", encoding="utf-8")
+    print(f"Wrote {out} and {out.with_suffix('.js').name} ({out.stat().st_size / 1e6:.2f} MB, {len(documents)} entries)")
 
 
 if __name__ == "__main__":

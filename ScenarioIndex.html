@@ -2597,8 +2597,8 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
           </div>
         </div>
         <div class="dc-opt dc-opt-score">
-          <label class="dc-opt-label" for="dcMinScore">Minimum match <output id="dcMinScoreOut">0%</output></label>
-          <input id="dcMinScore" type="range" min="0" max="100" step="1" value="0" oninput="dcSetMinScore(this.value)">
+          <label class="dc-opt-label" for="dcMinScore">Minimum score <output id="dcMinScoreOut">0.00</output></label>
+          <input id="dcMinScore" type="range" min="0" max="1" step="0.01" value="0" oninput="dcSetMinScore(this.value)">
           <label class="dc-showall"><input id="dcShowAll" type="checkbox" onchange="dcApplyFilters()"> Show all matching results</label>
         </div>
       </div>
@@ -15251,9 +15251,10 @@ window.addEventListener('load', () => {
   /* Digital Curation search
      - Index: DigitalCuration/web/search_index.json (built offline by
        DigitalCuration/scripts/export_web_index.py with all-MiniLM-L6-v2).
-     - The query is embedded in the browser with the same model (transformers.js);
-       documents are ranked by cosine similarity (best of metadata/content vectors)
-       plus a small boost for exact word matches in title / keywords.
+       The index is built exactly like the Streamlit app's (scripts/build_index.py).
+     - The query is embedded in the browser with the same model (transformers.js,
+       full-precision weights) and documents are ranked by cosine similarity,
+       i.e. the same "Score" as scripts/streamlit_search.py (1 - cosine distance).
      - If the model cannot load (offline), it falls back to keyword search. */
   (function () {
     const DC_BASE = 'DigitalCuration/';
@@ -15261,7 +15262,7 @@ window.addEventListener('load', () => {
     // Same index as a script: <script src> works on file:// (double-click), fetch() does not
     const DC_INDEX_SCRIPT = DC_BASE + 'web/search_index.js';
     const DC_TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
-    const PAGE_SIZE = 8;
+    const PAGE_SIZE = 10;  // Streamlit top_k
 
     let indexPromise = null;
     let embedderPromise = null;
@@ -15271,7 +15272,7 @@ window.addEventListener('load', () => {
     let lastQuery = '';
     let shown = 0;
     const selectedTypes = new Set();  // empty = all types
-    let minScore = 0;                 // percent
+    let minScore = 0;                 // 0..1, same scale as the Streamlit "Score range" slider
 
     // Same colours as the Digital Curation Streamlit app (scripts/streamlit_search.py)
     const TYPE_COLORS = {
@@ -15281,7 +15282,7 @@ window.addEventListener('load', () => {
       iges: '#ff69b4', igs: '#ff69b4', stl: '#2e8b57', obj: '#1e90ff', dwg: '#2f4f4f', dxf: '#708090',
     };
     const typeColor = (t) => TYPE_COLORS[t] || '#6c757d';
-    const pctOf = (score) => Math.max(0, Math.min(100, Math.round(score * 100)));
+    const fmtScore = (score) => score.toFixed(3);  // as displayed by Streamlit ("Score: 0.461")
 
     function buildTypeFilters(idx) {
       const box = $('dcTypeFilters');
@@ -15308,24 +15309,24 @@ window.addEventListener('load', () => {
 
     window.dcSetMinScore = function (v) {
       minScore = Number(v) || 0;
-      $('dcMinScoreOut').textContent = minScore + '%';
+      $('dcMinScoreOut').textContent = minScore.toFixed(2);
       dcApplyFilters();
     };
 
     window.dcApplyFilters = function () {
       if (!lastQuery) return;
       lastResults = lastScored.filter((r) =>
-        (selectedTypes.size === 0 || selectedTypes.has(r.doc.type || 'other')) && pctOf(r.score) >= minScore);
+        (selectedTypes.size === 0 || selectedTypes.has(r.doc.type || 'other')) && r.score >= minScore);
       shown = 0;
       const info = $('dcResultsInfo');
       const filters = [];
       if (selectedTypes.size) filters.push([...selectedTypes].map((t) => '.' + t).join(', '));
-      if (minScore > 0) filters.push('≥ ' + minScore + '%');
+      if (minScore > 0) filters.push('score ≥ ' + minScore.toFixed(2));
       info.textContent = lastResults.length + ' result' + (lastResults.length === 1 ? '' : 's') + ' for “' + lastQuery + '”' +
         (filters.length ? ' · ' + filters.join(' · ') : '');
       $('dcSearchResults').scrollTop = 0;  // new query / filter: back to the best match
       if (!lastResults.length) {
-        $('dcSearchResults').innerHTML = '<div class="dc-empty">No document matches these filters. Try lowering the minimum match or selecting more file types.</div>';
+        $('dcSearchResults').innerHTML = '<div class="dc-empty">No document matches these filters. Try lowering the minimum score or selecting more file types.</div>';
       } else {
         renderPage();
       }
@@ -15356,7 +15357,7 @@ window.addEventListener('load', () => {
             idx.documents.forEach((d) => {
               d._title = new Set(words(d.title + ' ' + d.file));
               d._tags = new Set(words((d.keywords || []).join(' ') + ' ' + d.folder));
-              d._body = (d.summary + ' ' + d.excerpt).toLowerCase();
+              d._body = String(d.summary || '').toLowerCase();
             });
             setStatus(idx.count + ' documents indexed');
             buildTypeFilters(idx);
@@ -15367,11 +15368,12 @@ window.addEventListener('load', () => {
       return indexPromise;
     }
 
-    function loadEmbedder(modelName) {
+    function loadEmbedder(idx) {
       if (!embedderPromise) {
         embedderPromise = import(DC_TRANSFORMERS_URL).then(({ pipeline, env }) => {
           env.allowLocalModels = false;
-          return pipeline('feature-extraction', modelName);
+          // Full-precision weights (not the default int8 build) so query vectors match Python's
+          return pipeline('feature-extraction', idx.browser_model, { quantized: idx.browser_quantized === true });
         });
       }
       return embedderPromise;
@@ -15379,7 +15381,7 @@ window.addEventListener('load', () => {
 
     // Start downloading the index and the model as soon as the user focuses the bar
     window.dcWarmUp = function () {
-      loadIndex().then((idx) => loadEmbedder(idx.browser_model)).catch(() => {});
+      loadIndex().then((idx) => loadEmbedder(idx)).catch(() => {});
     };
 
     // Load the (local) index once the page is ready so the file-type filters are populated;
@@ -15409,7 +15411,7 @@ window.addEventListener('load', () => {
       if (semanticAvailable) {
         try {
           if (!embedderPromise) setStatus('Loading search model (first time only)…');
-          const embed = await loadEmbedder(idx.browser_model);
+          const embed = await loadEmbedder(idx);
           const out = await embed(query, { pooling: 'mean', normalize: true });
           qVec = out.data;
         } catch (err) {
@@ -15419,16 +15421,12 @@ window.addEventListener('load', () => {
         }
       }
       const scored = idx.documents.map((doc) => {
-        const lex = lexicalScore(doc, qWords);
-        let sem = 0;
-        if (qVec) {
-          for (const v of doc.vectors) {
-            let dot = 0;
-            for (let i = 0; i < v.length; i++) dot += v[i] * qVec[i];
-            if (dot > sem) sem = dot;
-          }
-        }
-        return { doc, score: qVec ? sem + 0.15 * lex : lex };
+        if (!qVec) return { doc, score: lexicalScore(doc, qWords) };
+        // Cosine similarity: both vectors are L2-normalized, so it is the dot product
+        const v = doc.vector;
+        let dot = 0;
+        for (let i = 0; i < v.length; i++) dot += v[i] * qVec[i];
+        return { doc, score: dot };
       });
       scored.sort((a, b) => b.score - a.score);
       const filtered = qVec ? scored : scored.filter((r) => r.score > 0);
@@ -15437,14 +15435,14 @@ window.addEventListener('load', () => {
     }
 
     function renderResult({ doc, score }) {
-      const pct = pctOf(score);
+      const pct = Math.max(0, Math.min(100, score * 100));
       const tags = (doc.keywords || []).slice(0, 6).map((k) => '<span class="dc-tag">' + esc(k) + '</span>').join('');
       const links = [
         doc.path ? '<a href="' + esc(fileUrl(doc.path)) + '" target="_blank" rel="noopener">Open file ↗</a>' : '',
         doc.metadata_path ? '<a href="' + esc(fileUrl(doc.metadata_path)) + '" target="_blank" rel="noopener">ESMS metadata ↗</a>' : '',
       ].join('');
       return '<div class="dc-result">' +
-        '<div class="dc-score-col"><div class="dc-score">' + pct + '%</div><div class="dc-score-bar"><span style="width:' + pct + '%"></span></div></div>' +
+        '<div class="dc-score-col"><div class="dc-score" title="Cosine similarity (same score as Digital Curation / Streamlit)">' + fmtScore(score) + '</div><div class="dc-score-bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div style="min-width:0;">' +
           '<div class="dc-r-title">' + esc(doc.title) + (doc.type ? '<span class="dc-type" style="--c:' + typeColor(doc.type) + '">.' + esc(doc.type) + '</span>' : '') + '</div>' +
           '<div class="dc-folder">' + esc((doc.folder ? doc.folder + '/' : '') + doc.file) + '</div>' +
