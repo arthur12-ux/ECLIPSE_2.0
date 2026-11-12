@@ -2574,14 +2574,20 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
     </div>
 
     <!-- Digital Curation library search (index built by DigitalCuration/scripts/export_web_index.py) -->
-    <div id="dcSearch" class="dc-search">
-      <div class="dc-search-head">
-        <div>
-          <div class="dc-search-title">Search the model library</div>
-          <div class="dc-search-sub">Semantic search powered by Digital Curation over ESMS metadata and file contents.</div>
-        </div>
-        <div id="dcSearchStatus" class="dc-search-status" aria-live="polite"></div>
-      </div>
+    <div id="dcSearch" class="dc-search is-collapsed">
+      <button type="button" id="dcSearchToggle" class="dc-search-head" aria-expanded="false" aria-controls="dcSearchBody" onclick="dcToggleSearch()">
+        <span class="dc-search-head-text">
+          <span class="dc-search-title"><svg class="dc-title-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>Search the model library</span>
+          <span class="dc-search-sub">Semantic search powered by Digital Curation over ESMS metadata and file contents.</span>
+          <span class="dc-search-credit">Digital Curation tool created by <strong>Shalva Begiashvili</strong> · Georgia Tech ASDL</span>
+        </span>
+        <span class="dc-search-head-side">
+          <span id="dcSearchStatus" class="dc-search-status" aria-live="polite"></span>
+          <svg class="dc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </button>
+      <div id="dcSearchBody" class="dc-search-body">
+      <div class="dc-search-body-inner">
       <form class="dc-search-bar" role="search" onsubmit="event.preventDefault(); dcRunSearch();">
         <svg class="dc-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
         <input id="dcSearchInput" type="search" autocomplete="off" spellcheck="false"
@@ -2597,13 +2603,15 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
           </div>
         </div>
         <div class="dc-opt dc-opt-score">
-          <label class="dc-opt-label" for="dcMinScore">Minimum score <output id="dcMinScoreOut">0.00</output></label>
-          <input id="dcMinScore" type="range" min="0" max="1" step="0.01" value="0" oninput="dcSetMinScore(this.value)">
+          <label class="dc-opt-label" for="dcMinScore">Minimum match <output id="dcMinScoreOut">0%</output></label>
+          <input id="dcMinScore" type="range" min="0" max="100" step="1" value="0" oninput="dcSetMinScore(this.value)">
           <label class="dc-showall"><input id="dcShowAll" type="checkbox" onchange="dcApplyFilters()"> Show all matching results</label>
         </div>
       </div>
       <div id="dcResultsInfo" class="dc-results-info" aria-live="polite"></div>
       <div id="dcSearchResults" class="dc-results"></div>
+      </div>
+      </div>
     </div>
 
     <div id="scenarioNameDialog" role="dialog" aria-modal="true" aria-labelledby="scenarioNameDialogTitle"
@@ -15159,10 +15167,43 @@ window.addEventListener('load', () => {
       radial-gradient(120% 90% at 100% 0%, rgba(87, 199, 255, 0.08), transparent 55%),
       linear-gradient(180deg, rgba(16, 27, 45, 0.92), rgba(9, 16, 28, 0.95));
   }
-  .dc-search-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .dc-search-title { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; color: var(--team-blue); }
+  /* Collapsible header: the whole row toggles the panel */
+  .dc-search-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; padding: 0; margin: 0; border: 0; background: none; color: inherit;
+    text-align: left; cursor: pointer; font: inherit;
+  }
+  .dc-search-head:focus-visible { outline: 2px solid var(--team-blue); outline-offset: 6px; border-radius: 8px; }
+  .dc-search-head-text { display: flex; flex-direction: column; min-width: 0; }
+  .dc-search-head-side { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .dc-search-title {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: 0.04em; color: #ff5c6c;
+  }
+  .dc-title-icon {
+    width: 30px; height: 30px; padding: 6px; flex-shrink: 0; border-radius: 9px;
+    fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round;
+    background: rgba(255, 92, 108, 0.12); border: 1px solid rgba(255, 92, 108, 0.35);
+  }
   .dc-search-sub { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(233, 242, 255, 0.66); }
   .dc-search-status { font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.6); text-align: right; }
+  .dc-search-credit { margin-top: 5px; font-family: 'Inter', sans-serif; font-size: 11px; font-style: italic; color: rgba(233, 242, 255, 0.5); }
+  .dc-search-credit strong { font-weight: 600; font-style: normal; color: rgba(233, 242, 255, 0.78); }
+  .dc-chevron {
+    width: 28px; height: 28px; padding: 5px; border-radius: 8px;
+    fill: none; stroke: var(--team-blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    background: rgba(87, 199, 255, 0.08); border: 1px solid rgba(87, 199, 255, 0.25);
+    transition: transform 220ms ease, background 160ms ease;
+  }
+  .dc-search-head:hover .dc-chevron { background: rgba(87, 199, 255, 0.16); }
+  .dc-search.is-collapsed .dc-chevron { transform: rotate(-90deg); }
+  .dc-search-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 260ms ease, opacity 200ms ease; }
+  .dc-search-body-inner { min-height: 0; overflow: hidden; }
+  .dc-search.is-collapsed .dc-search-body { grid-template-rows: 0fr; opacity: 0; }
+  .dc-search.is-collapsed .dc-search-body-inner { visibility: hidden; transition: visibility 0s 260ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .dc-search-body, .dc-chevron { transition: none; }
+  }
   .dc-search-bar {
     position: relative; display: flex; gap: 8px; margin-top: 14px;
   }
@@ -15188,7 +15229,7 @@ window.addEventListener('load', () => {
     border: 1px solid rgba(160, 204, 255, 0.08); background: rgba(255, 255, 255, 0.015);
   }
   .dc-opt-label { display: flex; justify-content: space-between; margin-bottom: 7px; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(233, 242, 255, 0.6); }
-  .dc-opt-label output { color: var(--team-blue); }
+  .dc-opt-label output { color: var(--team-gold); }
   .dc-opt-hint { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(233, 242, 255, 0.45); }
   .dc-type-filters { display: flex; flex-wrap: wrap; gap: 6px; }
   .dc-type-chip {
@@ -15202,7 +15243,7 @@ window.addEventListener('load', () => {
   .dc-type-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #6c757d); }
   .dc-type-chip .n { opacity: 0.55; }
   .dc-type-chip[aria-pressed="true"] { color: #fff; border-color: var(--c, var(--team-blue)); background: color-mix(in srgb, var(--c, #57c7ff) 26%, transparent); }
-  .dc-opt-score input[type="range"] { width: 100%; accent-color: var(--team-blue); cursor: pointer; }
+  .dc-opt-score input[type="range"] { width: 100%; accent-color: var(--team-gold); cursor: pointer; }
   .dc-showall { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: 11.5px; color: rgba(233, 242, 255, 0.72); cursor: pointer; }
   .dc-showall input { accent-color: var(--team-blue); }
   .dc-results-info { margin-top: 10px; font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.55); }
@@ -15224,9 +15265,9 @@ window.addEventListener('load', () => {
     border: 1px solid rgba(160, 204, 255, 0.1); background: rgba(255, 255, 255, 0.02);
   }
   .dc-result:hover { border-color: rgba(87, 199, 255, 0.35); }
-  .dc-score { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--team-blue); }
+  .dc-score { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--team-gold); }
   .dc-score-bar { height: 3px; margin-top: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-  .dc-score-bar span { display: block; height: 100%; background: var(--team-blue); }
+  .dc-score-bar span { display: block; height: 100%; background: var(--team-gold); }
   .dc-r-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--text); }
   .dc-type { font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; color: #fff; background: var(--c, #6c757d); }
   .dc-folder { margin-top: 2px; font-family: var(--mono); font-size: 10px; color: rgba(233, 242, 255, 0.5); overflow-wrap: anywhere; }
@@ -15240,6 +15281,10 @@ window.addEventListener('load', () => {
   .dc-empty { padding: 14px; text-align: center; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(233, 242, 255, 0.6); }
   @media (max-width: 760px) {
     .dc-search { padding: 14px; }
+    .dc-search-sub { display: none; }
+    .dc-search-title { font-size: 15px; gap: 8px; }
+    .dc-title-icon { width: 26px; height: 26px; padding: 5px; }
+    .dc-search-status { display: none; }
     .dc-search-bar .btn { padding: 0 12px; }
     .dc-options { grid-template-columns: 1fr; gap: 14px; }
     .dc-result { grid-template-columns: 1fr; gap: 6px; }
@@ -15282,7 +15327,8 @@ window.addEventListener('load', () => {
       iges: '#ff69b4', igs: '#ff69b4', stl: '#2e8b57', obj: '#1e90ff', dwg: '#2f4f4f', dxf: '#708090',
     };
     const typeColor = (t) => TYPE_COLORS[t] || '#6c757d';
-    const fmtScore = (score) => score.toFixed(3);  // as displayed by Streamlit ("Score: 0.461")
+    // Match shown as a percentage of the Streamlit score (0.461 → 46.1%)
+    const fmtScore = (score) => (score * 100).toFixed(1) + '%';
 
     function buildTypeFilters(idx) {
       const box = $('dcTypeFilters');
@@ -15308,8 +15354,8 @@ window.addEventListener('load', () => {
     };
 
     window.dcSetMinScore = function (v) {
-      minScore = Number(v) || 0;
-      $('dcMinScoreOut').textContent = minScore.toFixed(2);
+      minScore = (Number(v) || 0) / 100;
+      $('dcMinScoreOut').textContent = Math.round(minScore * 100) + '%';
       dcApplyFilters();
     };
 
@@ -15321,7 +15367,7 @@ window.addEventListener('load', () => {
       const info = $('dcResultsInfo');
       const filters = [];
       if (selectedTypes.size) filters.push([...selectedTypes].map((t) => '.' + t).join(', '));
-      if (minScore > 0) filters.push('score ≥ ' + minScore.toFixed(2));
+      if (minScore > 0) filters.push('match ≥ ' + Math.round(minScore * 100) + '%');
       info.textContent = lastResults.length + ' result' + (lastResults.length === 1 ? '' : 's') + ' for “' + lastQuery + '”' +
         (filters.length ? ' · ' + filters.join(' · ') : '');
       $('dcSearchResults').scrollTop = 0;  // new query / filter: back to the best match
@@ -15384,6 +15430,26 @@ window.addEventListener('load', () => {
       loadIndex().then((idx) => loadEmbedder(idx)).catch(() => {});
     };
 
+    // Collapsible panel (closed by default; the last state is remembered in this browser)
+    const DC_OPEN_KEY = 'eclipse.dcSearch.open';
+    function setSearchOpen(open, focus) {
+      const panel = $('dcSearch');
+      const toggle = $('dcSearchToggle');
+      if (!panel || !toggle) return;
+      panel.classList.toggle('is-collapsed', !open);
+      toggle.setAttribute('aria-expanded', String(open));
+      try { localStorage.setItem(DC_OPEN_KEY, open ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+      if (open && focus) setTimeout(() => $('dcSearchInput') && $('dcSearchInput').focus(), 120);
+    }
+    window.dcToggleSearch = function () {
+      setSearchOpen($('dcSearch').classList.contains('is-collapsed'), true);
+    };
+    (function restoreSearchOpen() {
+      let open = false;
+      try { open = localStorage.getItem(DC_OPEN_KEY) === '1'; } catch (e) { /* storage unavailable */ }
+      if (open) setSearchOpen(true, false);
+    })();
+
     // Load the (local) index once the page is ready so the file-type filters are populated;
     // the heavier model is only fetched when the user focuses the search bar.
     window.addEventListener('load', () => {
@@ -15442,7 +15508,7 @@ window.addEventListener('load', () => {
         doc.metadata_path ? '<a href="' + esc(fileUrl(doc.metadata_path)) + '" target="_blank" rel="noopener">ESMS metadata ↗</a>' : '',
       ].join('');
       return '<div class="dc-result">' +
-        '<div class="dc-score-col"><div class="dc-score" title="Cosine similarity (same score as Digital Curation / Streamlit)">' + fmtScore(score) + '</div><div class="dc-score-bar"><span style="width:' + pct + '%"></span></div></div>' +
+        '<div class="dc-score-col"><div class="dc-score" title="Match: cosine similarity × 100 (Streamlit score ' + score.toFixed(3) + ')">' + fmtScore(score) + '</div><div class="dc-score-bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div style="min-width:0;">' +
           '<div class="dc-r-title">' + esc(doc.title) + (doc.type ? '<span class="dc-type" style="--c:' + typeColor(doc.type) + '">.' + esc(doc.type) + '</span>' : '') + '</div>' +
           '<div class="dc-folder">' + esc((doc.folder ? doc.folder + '/' : '') + doc.file) + '</div>' +
