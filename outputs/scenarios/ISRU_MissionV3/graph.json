@@ -1,19 +1,17 @@
 {
-  "written_at": 1794493257264,
+  "written_at": 1794493301543,
   "scenario_name": "ISRU_MissionV3",
   "scenario_slug": "ISRU_MissionV3",
   "sysml_file": "clean_database/sysml/ISRU_MissionV3.sysml",
   "active_nodes": [
-    "HabitationModule",
     "ISRUPlant",
-    "LaunchLandingZone",
     "PropellantDepot",
     "LOXRover",
     "SolarPowerSystem",
     "RegolithRover",
     "ISRUExcavation"
   ],
-  "active_nodes_count": 8,
+  "active_nodes_count": 6,
   "connections": [
     {
       "name": "ISRUPlantToRover",
@@ -68,32 +66,6 @@
       }
     },
     {
-      "name": "PowerGenToHabMod",
-      "type": "PowerMovement",
-      "flow": "Power",
-      "from": {
-        "part": "SolarPowerSystem",
-        "port": "Power_PowerPortOutToHabitationModule"
-      },
-      "to": {
-        "part": "HabitationModule",
-        "port": "Habitation_PowerPortIn"
-      }
-    },
-    {
-      "name": "PowerGenToLaunch",
-      "type": "PowerMovement",
-      "flow": "Power",
-      "from": {
-        "part": "SolarPowerSystem",
-        "port": "Power_PowerPortOutToLaunchLandingZone"
-      },
-      "to": {
-        "part": "LaunchLandingZone",
-        "port": "LaunchZone_PowerPortIn"
-      }
-    },
-    {
       "name": "ISRUExcavationToRegolithRover",
       "type": "RegolithMovement",
       "flow": "Regolith",
@@ -134,69 +106,6 @@
     }
   ],
   "parts": {
-    "HabitationModule": {
-      "id": "urn:S24_PIPELINE:part:HabitationModule:001",
-      "type": "Part",
-      "dimensions": {
-        "size_m": {
-          "length": 20.0,
-          "width": 10.0,
-          "height": 8.0
-        },
-        "metersPerUnit": 1,
-        "upAxis": "Z"
-      },
-      "transform": {
-        "position_m": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "rotation_deg": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "attributes": {
-        "constantPowerRate": 5.0,
-        "totalEnergyConsumed": 0.0,
-        "HabitationModule_volume_m3": 1600.0,
-        "cadAreaScaleFactor": 403.580063574,
-        "cadCenterOfMassXM": 0.685675050283,
-        "cadCenterOfMassYM": 3.28553946567,
-        "cadCenterOfMassZM": 0.954978730281,
-        "cadLengthScaleFactor": 20.0893022172,
-        "cadMetadataScaleFactor": 20.0893022172,
-        "cadSourceCenterOfMassXM": -0.0450327138669,
-        "cadSourceCenterOfMassYM": 0.37874091546,
-        "cadSourceCenterOfMassZM": 0.0373024441854,
-        "cadSourceSurfaceAreaM2": 1.60374852394,
-        "cadSurfaceAreaM2": 647.240931246,
-        "cadVolumeScaleFactor": 8107.64186597
-      },
-      "materialRef": null,
-      "ports": [
-        {
-          "name": "Habitation_PowerPortIn",
-          "direction": [
-            "in"
-          ],
-          "items": [
-            "PowerIn"
-          ]
-        }
-      ],
-      "metadata": {
-        "geometryRef": "assets/geom/HabitationModule_geom.usda",
-        "cadFormat": "USDC",
-        "cadSourceFile": "habitationmodule.usdc",
-        "cadSourceFrontAxis": "+X",
-        "cadSourceUpAxis": "Y",
-        "cadVolumeAvailable": "false",
-        "cadVolumeStatus": "mesh_not_watertight"
-      }
-    },
     "ISRUPlant": {
       "id": "urn:S24_PIPELINE:part:ISRUPlant:001",
       "type": "Part",
@@ -291,72 +200,6 @@
         "geometryRef": "assets/geom/ISRUPlant_geom.usda",
         "cadFormat": "USDC",
         "cadSourceFile": "isruplant.usdc",
-        "cadSourceFrontAxis": "+X",
-        "cadSourceUpAxis": "Y",
-        "cadVolumeAvailable": "false",
-        "cadVolumeStatus": "mesh_not_watertight"
-      }
-    },
-    "LaunchLandingZone": {
-      "id": "urn:S24_PIPELINE:part:LaunchLandingZone:001",
-      "type": "Part",
-      "dimensions": {
-        "size_m": {
-          "length": 50.0,
-          "width": 50.0,
-          "height": 10.0
-        },
-        "metersPerUnit": 1,
-        "upAxis": "Z"
-      },
-      "transform": {
-        "position_m": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "rotation_deg": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "attributes": {
-        "loxCapacity": 50000.0,
-        "loxStored": 0.0,
-        "utilitiesPowerRate": 3.0,
-        "totalEnergyConsumed": 0.0,
-        "chillingPowerPerKgLox": 0.31,
-        "LaunchLandingZone_volume_m3": 25000.0,
-        "cadAreaScaleFactor": 57.7273618468,
-        "cadCenterOfMassXM": 0.609205335822,
-        "cadCenterOfMassYM": 0.844316722688,
-        "cadCenterOfMassZM": 1.5671814238,
-        "cadLengthScaleFactor": 7.59785244966,
-        "cadMetadataScaleFactor": 7.59785244966,
-        "cadSourceCenterOfMassXM": 0.080181253829,
-        "cadSourceCenterOfMassYM": 1.06048016453,
-        "cadSourceCenterOfMassZM": 0.205796549158,
-        "cadSourceSurfaceAreaM2": 32.7543266808,
-        "cadSurfaceAreaM2": 1890.82086835,
-        "cadVolumeScaleFactor": 438.60397762
-      },
-      "materialRef": null,
-      "ports": [
-        {
-          "name": "LaunchZone_PowerPortIn",
-          "direction": [
-            "in"
-          ],
-          "items": [
-            "PowerIn"
-          ]
-        }
-      ],
-      "metadata": {
-        "geometryRef": "assets/geom/LaunchLandingZone_geom.usda",
-        "cadFormat": "USDC",
-        "cadSourceFile": "launchlandingzone.usdc",
         "cadSourceFrontAxis": "+X",
         "cadSourceUpAxis": "Y",
         "cadVolumeAvailable": "false",
