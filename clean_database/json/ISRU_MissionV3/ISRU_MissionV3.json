@@ -873,7 +873,7 @@
       "to": {
         "part": "ISRUPlant_1"
       },
-      "rover_id": "RegolithRover",
+      "rover_id": "RegolithRover_1",
       "stops": [],
       "path": {
         "waypoints_m": [
@@ -931,7 +931,7 @@
       "to": {
         "part": "ISRUPlant_2"
       },
-      "rover_id": "RegolithRover",
+      "rover_id": "RegolithRover_2",
       "stops": [],
       "path": {
         "waypoints_m": [
@@ -1004,7 +1004,7 @@
       "to": {
         "part": "PropellantDepot"
       },
-      "rover_id": "LOXRover",
+      "rover_id": "LOXRover_1",
       "stops": [],
       "path": {
         "waypoints_m": [
@@ -1042,7 +1042,7 @@
       "to": {
         "part": "PropellantDepot"
       },
-      "rover_id": "LOXRover",
+      "rover_id": "LOXRover_2",
       "stops": [],
       "path": {
         "waypoints_m": [
@@ -1660,8 +1660,8 @@
       }
     ],
     "rover_counts": {
-      "regolith": 1,
-      "lox": 1
+      "regolith": 2,
+      "lox": 2
     },
     "rover_payloads_kg": {
       "regolith": 5000,
@@ -1784,10 +1784,10 @@
     ],
     "resource_routes": [
       {
-        "id": "Regolith_1794666021427_0",
+        "id": "Regolith_1794667054122_0",
         "flow": "Regolith",
         "rover_type": "RegolithRover",
-        "rover_id": "RegolithRover",
+        "rover_id": "RegolithRover_1",
         "from": "ISRUExcavation",
         "to": "ISRUPlant_1",
         "stops": [],
@@ -1796,10 +1796,10 @@
         "max_slope_deg": 14.681
       },
       {
-        "id": "Regolith_1794666023738_1",
+        "id": "Regolith_1794667054122_1",
         "flow": "Regolith",
         "rover_type": "RegolithRover",
-        "rover_id": "RegolithRover",
+        "rover_id": "RegolithRover_2",
         "from": "ISRUExcavation",
         "to": "ISRUPlant_2",
         "stops": [],
@@ -1811,7 +1811,7 @@
         "id": "LOX_1794666021427_0",
         "flow": "LOX",
         "rover_type": "LOXRover",
-        "rover_id": "LOXRover",
+        "rover_id": "LOXRover_1",
         "from": "ISRUPlant_1",
         "to": "PropellantDepot",
         "stops": [],
@@ -1823,7 +1823,7 @@
         "id": "LOX_1794666023741_1",
         "flow": "LOX",
         "rover_type": "LOXRover",
-        "rover_id": "LOXRover",
+        "rover_id": "LOXRover_2",
         "from": "ISRUPlant_2",
         "to": "PropellantDepot",
         "stops": [],
