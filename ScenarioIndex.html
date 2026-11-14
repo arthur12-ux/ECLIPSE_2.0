@@ -13977,15 +13977,18 @@ let up42MoonImg = null;
   }
 
   function setSavedScenarioComparisonMode(mode) {
-    savedScenarioComparisonMode = mode === 'history' ? 'history' : 'moes';
+    savedScenarioComparisonMode = ['history', 'radar'].includes(mode) ? mode : 'moes';
     drawSavedScenarioComparison();
   }
 
   function toggleSavedScenarioComparisonSelection(slug, checked) {
     const selected = new Set(savedScenarioComparisonSelection);
     if (checked) {
-      if (selected.size >= 4) {
-        alert('Choose up to four completed scenarios at a time.');
+      const limit = savedScenarioComparisonMode === 'radar' ? RADAR_MAX_SERIES : 4;
+      if (selected.size >= limit) {
+        alert(limit === 4
+          ? 'Choose up to four completed scenarios at a time.'
+          : 'The spider chart compares up to three scenarios at a time. Remove one first.');
         drawSavedScenarioComparison();
         return;
       }
@@ -14018,13 +14021,7 @@ let up42MoonImg = null;
   }
 
   function renderScenarioComparisonMoes(scenarios, baselineSlug) {
-    const rows = [
-      {label: 'Regolith received', key: 'regolith_kg', unit: 'kg', color: '#ffd166'},
-      {label: 'Primary resource output', key: 'lox_kg', unit: 'kg', color: '#4cc9f0'},
-      {label: 'Delivered to terminals', key: 'delivered_lox_kg', unit: 'kg', color: '#7ee0b1'},
-      {label: 'Energy consumed', key: 'energy_kwh', unit: 'kWh', color: '#ff7a8a'},
-      {label: 'Simulation duration', key: 'duration_hr', unit: 'hr', color: '#a78bfa'},
-    ];
+    const rows = SCENARIO_COMPARISON_MOE_ROWS;
     const baselineSnapshot = scenarios.find(snapshot => snapshot.scenario_slug === baselineSlug) || scenarios[0];
     const baselineMetrics = getScenarioResultMetrics(baselineSnapshot);
     return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;">${scenarios.map(snapshot => {
@@ -14034,6 +14031,179 @@ let up42MoonImg = null;
       return `<div style="border:1px solid ${isBaseline ? 'rgba(255,209,102,0.65)' : 'var(--border2)'};border-radius:8px;padding:12px;background:#07101a;"><div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--text1);"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(snapshot.name)}</span>${isBaseline ? '<span style="color:#ffd166;font-size:8px;white-space:nowrap;">BASELINE</span>' : ''}</div><div style="font-size:8px;color:var(--text3);margin:3px 0 10px;">${stamp ? `Completed ${new Date(stamp).toLocaleDateString()}` : 'Completed DES run'}</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">${rows.map(row => { const value = Number(metrics[row.key] || 0); const reference = Number(baselineMetrics[row.key] || 0); const delta = isBaseline || reference === 0 ? 'Baseline' : `${value >= reference ? '+' : ''}${((value - reference) / Math.abs(reference) * 100).toFixed(1)}%`; const deltaColor = isBaseline ? '#ffd166' : value >= reference ? '#7ee0b1' : '#ff7a8a'; return `<div><div style="font-size:8px;color:var(--text3);">${row.label}</div><div style="font-size:15px;font-weight:700;color:${row.color};margin-top:2px;">${formatComparisonNumber(value, row.unit)}</div><div style="font-size:8px;color:${deltaColor};margin-top:2px;">${delta}</div></div>`; }).join('')}</div></div>`;
     }).join('')}</div>`;
   }
+
+  // Final MoEs shared by the "Final MoEs" cards and the spider chart
+  const SCENARIO_COMPARISON_MOE_ROWS = [
+    {label: 'Regolith received', key: 'regolith_kg', unit: 'kg', color: '#ffd166'},
+    {label: 'Primary resource output', key: 'lox_kg', unit: 'kg', color: '#4cc9f0'},
+    {label: 'Delivered to terminals', key: 'delivered_lox_kg', unit: 'kg', color: '#7ee0b1'},
+    {label: 'Energy consumed', key: 'energy_kwh', unit: 'kWh', color: '#ff7a8a', lowerIsBetter: true},
+    {label: 'Simulation duration', key: 'duration_hr', unit: 'hr', color: '#a78bfa'},
+  ];
+
+  // ── Spider chart ────────────────────────────────────────────────────────────
+  // Same axes as "Final MoEs" (totals). Each axis runs from 0 at the centre to
+  // the largest value among ALL completed scenarios, so adding / removing a
+  // scenario never rescales the others. At most 3 scenarios at once: the 3 first
+  // categorical slots are the only ones that stay distinguishable for
+  // colour-blind readers.
+  const RADAR_MAX_SERIES = 3;
+  const RADAR_COLORS = ['#3987e5', '#d95926', '#199e70'];
+  const RADAR_AXES = SCENARIO_COMPARISON_MOE_ROWS.map(row => ({
+    key: row.key,
+    label: row.label,
+    unit: row.unit,
+    lowerIsBetter: Boolean(row.lowerIsBetter),
+    get: m => Number.isFinite(Number(m[row.key])) ? Number(m[row.key]) : null,
+  }));
+  let savedScenarioRadarSlots = {};  // slug -> colour slot, kept while the scenario stays selected
+
+  function radarAssignSlots(shown) {
+    const keep = {};
+    shown.forEach(snapshot => {
+      const slot = savedScenarioRadarSlots[snapshot.scenario_slug];
+      if (slot !== undefined) keep[snapshot.scenario_slug] = slot;
+    });
+    shown.forEach(snapshot => {
+      if (keep[snapshot.scenario_slug] !== undefined) return;
+      const used = new Set(Object.values(keep));
+      const free = [0, 1, 2].find(slot => !used.has(slot));
+      keep[snapshot.scenario_slug] = free ?? 0;
+    });
+    savedScenarioRadarSlots = keep;
+    return keep;
+  }
+
+  function formatRadarValue(value, unit) {
+    if (value === null || !Number.isFinite(value)) return '—';
+    const digits = Math.abs(value) >= 100 ? 0 : Math.abs(value) >= 10 ? 1 : 2;
+    return `${value.toLocaleString(undefined, {maximumFractionDigits: digits})} ${unit}`;
+  }
+
+  function renderScenarioComparisonRadar(selected, allScenarios, baselineSlug) {
+    const shown = selected.slice(0, RADAR_MAX_SERIES);
+    const hidden = selected.slice(RADAR_MAX_SERIES);
+    const slots = radarAssignSlots(shown);
+    const valuesFor = snapshot => {
+      const metrics = getScenarioResultMetrics(snapshot);
+      return RADAR_AXES.map(axis => {
+        const value = axis.get(metrics);
+        return Number.isFinite(value) ? value : null;
+      });
+    };
+    // Axis scale: best value among every completed scenario (stable when toggling)
+    const allValues = allScenarios.map(valuesFor);
+    const axisMax = RADAR_AXES.map((axis, i) => axis.fixedMax
+      || Math.max(1e-9, ...allValues.map(values => values[i] ?? 0)));
+
+    const W = 520, H = 400, cx = 260, cy = 196, R = 132;
+    const angle = i => (-90 + i * 360 / RADAR_AXES.length) * Math.PI / 180;
+    const point = (i, frac) => [cx + Math.cos(angle(i)) * R * frac, cy + Math.sin(angle(i)) * R * frac];
+
+    const rings = [0.25, 0.5, 0.75, 1].map(frac =>
+      `<polygon points="${RADAR_AXES.map((_, i) => point(i, frac).map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="rgba(255,255,255,${frac === 1 ? 0.18 : 0.08})" stroke-width="1"/>`
+    ).join('');
+    // Ring labels sit between the first two axes so they never collide with an axis label
+    const ringAngle = (-90 + 180 / RADAR_AXES.length) * Math.PI / 180;
+    const ringLabels = [0.5, 1].map(frac => {
+      const x = cx + Math.cos(ringAngle) * R * frac * 0.86;
+      const y = cy + Math.sin(ringAngle) * R * frac * 0.86;
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" fill="rgba(233,242,255,0.38)" font-size="9">${frac * 100}%</text>`;
+    }).join('');
+    const spokes = RADAR_AXES.map((_, i) => {
+      const [x, y] = point(i, 1);
+      return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>`;
+    }).join('');
+    const axisLabels = RADAR_AXES.map((axis, i) => {
+      const [x, y] = point(i, 1.13);
+      const cos = Math.cos(angle(i));
+      const anchor = Math.abs(cos) < 0.2 ? 'middle' : cos > 0 ? 'start' : 'end';
+      const dy = Math.sin(angle(i)) < -0.5 ? -4 : Math.sin(angle(i)) > 0.5 ? 12 : 4;
+      return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}" fill="rgba(233,242,255,0.86)" font-size="11" font-weight="600">${axis.label}<tspan x="${x.toFixed(1)}" dy="12" fill="rgba(233,242,255,0.48)" font-size="9" font-weight="400">max = ${formatRadarValue(axisMax[i], axis.unit)}${axis.lowerIsBetter ? ' · lower is better' : ''}</tspan></text>`;
+    }).join('');
+
+    const series = shown.map(snapshot => {
+      const color = RADAR_COLORS[slots[snapshot.scenario_slug]];
+      const values = valuesFor(snapshot);
+      const fracs = values.map((value, i) => value === null ? 0 : Math.max(0, Math.min(1, value / axisMax[i])));
+      const pts = fracs.map((frac, i) => point(i, frac));
+      const isBaseline = snapshot.scenario_slug === baselineSlug;
+      const name = escapeHtml(snapshot.name);
+      const markers = pts.map(([x, y], i) => {
+        const axis = RADAR_AXES[i];
+        const tip = `${name}|${axis.label}|${formatRadarValue(values[i], axis.unit)}|${values[i] === null ? '' : `${Math.round(fracs[i] * 100)}% of the largest value`}`;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${color}" stroke="#07101a" stroke-width="2"/>` +
+          `<circle class="radar-hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="transparent" data-tip="${escapeHtml(tip)}" data-color="${color}" onmouseenter="radarShowTip(event)" onmousemove="radarShowTip(event)" onmouseleave="radarHideTip(event)"/>`;
+      }).join('');
+      return `<g class="radar-series" data-slug="${escapeHtml(snapshot.scenario_slug)}">` +
+        `<polygon points="${pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="${isBaseline ? 3 : 2}" stroke-linejoin="round"/>` +
+        markers + '</g>';
+    }).join('');
+
+    // Legend doubles as the add / remove control
+    const legend = shown.map(snapshot => {
+      const color = RADAR_COLORS[slots[snapshot.scenario_slug]];
+      const isBaseline = snapshot.scenario_slug === baselineSlug;
+      return `<span class="radar-chip is-on"><span class="radar-swatch" style="background:${color}"></span>${escapeHtml(snapshot.name)}${isBaseline ? ' <em>baseline</em>' : ''}` +
+        `<button type="button" title="Remove from comparison" aria-label="Remove ${escapeHtml(snapshot.name)}" onclick="toggleSavedScenarioComparisonSelection('${escapeHtml(snapshot.scenario_slug)}', false)">×</button></span>`;
+    }).join('');
+    const available = allScenarios.filter(snapshot => !selected.some(s => s.scenario_slug === snapshot.scenario_slug));
+    const canAdd = selected.length < RADAR_MAX_SERIES;
+    const addChips = available.map(snapshot =>
+      `<button type="button" class="radar-chip radar-add" ${canAdd ? '' : 'disabled title="Remove a scenario first (3 max on the spider chart)"'} onclick="toggleSavedScenarioComparisonSelection('${escapeHtml(snapshot.scenario_slug)}', true)">+ ${escapeHtml(snapshot.name)}</button>`
+    ).join('');
+    const hiddenNote = hidden.length
+      ? `<div class="radar-note">${hidden.map(s => escapeHtml(s.name)).join(', ')} ${hidden.length > 1 ? 'are' : 'is'} selected but not drawn: the spider chart shows ${RADAR_MAX_SERIES} scenarios at most. Remove one to show it.</div>`
+      : '';
+
+    const table = `<table class="radar-table"><thead><tr><th>Axis</th>${shown.map(snapshot =>
+      `<th><span class="radar-swatch" style="background:${RADAR_COLORS[slots[snapshot.scenario_slug]]}"></span>${escapeHtml(snapshot.name)}</th>`).join('')}</tr></thead><tbody>${
+      RADAR_AXES.map((axis, i) => `<tr><td>${axis.label}</td>${shown.map(snapshot => {
+        const value = valuesFor(snapshot)[i];
+        return `<td>${formatRadarValue(value, axis.unit)}</td>`;
+      }).join('')}</tr>`).join('')}</tbody></table>`;
+
+    return `<div class="radar-wrap">
+      <div class="radar-legend">${legend}${addChips ? `<span class="radar-add-label">Add:</span>${addChips}` : ''}</div>
+      ${hiddenNote}
+      <div class="radar-plot">
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Spider chart comparing ${shown.map(s => escapeHtml(s.name)).join(', ')}">
+          ${rings}${spokes}${ringLabels}${series}${axisLabels}
+        </svg>
+        <div class="radar-tip" role="tooltip"></div>
+      </div>
+      <div class="radar-caption">Same MoEs as "Final MoEs". Each axis runs from 0 (centre) to the largest value among completed scenarios: further out = larger value. Energy consumed is better when smaller; totals grow with the simulation duration. Hover a point for its value.</div>
+      ${table}
+    </div>`;
+  }
+
+  window.radarShowTip = function (event) {
+    const hit = event.currentTarget;
+    const plot = hit.closest('.radar-plot');
+    const tip = plot?.querySelector('.radar-tip');
+    if (!tip) return;
+    const [name, axis, value, frac] = (hit.dataset.tip || '').split('|');
+    tip.innerHTML = `<div class="radar-tip-head"><span class="radar-swatch" style="background:${hit.dataset.color}"></span>${name}</div>` +
+      `<div class="radar-tip-row"><span>${axis}</span><b>${value}</b></div>${frac ? `<div class="radar-tip-sub">${frac}</div>` : ''}`;
+    const box = plot.getBoundingClientRect();
+    let x = event.clientX - box.left + 14;
+    let y = event.clientY - box.top + 14;
+    tip.style.display = 'block';
+    if (x + tip.offsetWidth > box.width - 4) x = event.clientX - box.left - tip.offsetWidth - 14;
+    if (y + tip.offsetHeight > box.height - 4) y = event.clientY - box.top - tip.offsetHeight - 14;
+    tip.style.left = `${Math.max(4, x)}px`;
+    tip.style.top = `${Math.max(4, y)}px`;
+    plot.querySelectorAll('.radar-series').forEach(group => {
+      group.classList.toggle('is-dim', !group.contains(hit));
+    });
+  };
+
+  window.radarHideTip = function (event) {
+    const plot = event.currentTarget.closest('.radar-plot');
+    const tip = plot?.querySelector('.radar-tip');
+    if (tip) tip.style.display = 'none';
+    plot?.querySelectorAll('.radar-series').forEach(group => group.classList.remove('is-dim'));
+  };
 
   function renderScenarioComparisonHistory(scenarios) {
     const historyMetrics = [
@@ -14086,9 +14256,11 @@ let up42MoonImg = null;
     }).join('');
     const visual = savedScenarioComparisonMode === 'history'
       ? renderScenarioComparisonHistory(selected)
-      : renderScenarioComparisonMoes(selected, savedScenarioComparisonBaselineSlug);
+      : savedScenarioComparisonMode === 'radar'
+        ? renderScenarioComparisonRadar(selected, scenarios, savedScenarioComparisonBaselineSlug)
+        : renderScenarioComparisonMoes(selected, savedScenarioComparisonBaselineSlug);
     wrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:13px;">
-      <div style="display:grid;grid-template-columns:minmax(320px,1fr) auto;gap:10px;align-items:end;border-bottom:1px solid var(--border2);padding-bottom:12px;"><div><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">Completed scenarios (select 2-4)</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;">${scenarioChoices}</div></div><div><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">View</div><div style="display:flex;gap:4px;"><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('moes')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'moes' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Final MoEs</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('history')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'history' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Time histories</button></div></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--border2);padding-bottom:12px;"><div style="flex:1 1 260px;min-width:0;"><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">Completed scenarios (select 2-4)</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;">${scenarioChoices}</div></div><div><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">View</div><div style="display:flex;flex-wrap:wrap;gap:4px;"><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('moes')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'moes' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Final MoEs</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('history')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'history' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Time histories</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('radar')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'radar' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Spider chart</button></div></div></div>
       ${visual}
     </div>`;
   }
@@ -15575,6 +15747,57 @@ window.addEventListener('load', () => {
     #activation .ops-link-pulse { animation: none; stroke-opacity: 0; }
     #activation .sys-card, #activation .node { transition: none; }
   }
+</style>
+
+<!-- ===================== DES scenario comparison — spider chart ===================== -->
+<style>
+  .radar-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .radar-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .radar-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 9px; border-radius: 999px;
+    font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--text);
+    background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(160, 204, 255, 0.18);
+  }
+  .radar-chip em { font-style: normal; font-size: 9px; color: var(--team-gold); }
+  .radar-chip button {
+    display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border-radius: 50%;
+    border: 0; background: rgba(255, 255, 255, 0.08); color: var(--text2); font-size: 12px; line-height: 1; cursor: pointer;
+  }
+  .radar-chip button:hover { background: rgba(255, 122, 138, 0.25); color: #fff; }
+  .radar-add { padding: 4px 10px; cursor: pointer; color: var(--text2); background: transparent; border-style: dashed; }
+  .radar-add:hover:not([disabled]) { border-color: var(--accent); color: var(--accent); }
+  .radar-add[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .radar-add-label { margin-left: 6px; font-family: var(--mono); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .radar-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .radar-note {
+    padding: 7px 10px; border-radius: 7px; font-size: 10px; line-height: 1.45; color: #ffd36e;
+    background: rgba(255, 211, 74, 0.07); border: 1px solid rgba(255, 211, 74, 0.25);
+  }
+  .radar-plot {
+    position: relative; max-width: 620px; width: 100%; margin: 0 auto;
+    border: 1px solid var(--border2); border-radius: 10px; background: #07101a; padding: 6px;
+  }
+  .radar-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .radar-series { transition: opacity 140ms ease; }
+  .radar-series.is-dim { opacity: 0.2; }
+  .radar-hit { cursor: pointer; }
+  .radar-tip {
+    display: none; position: absolute; z-index: 5; pointer-events: none; min-width: 150px;
+    padding: 8px 10px; border-radius: 8px; font-size: 10.5px; color: var(--text);
+    background: rgba(7, 12, 20, 0.97); border: 1px solid rgba(160, 204, 255, 0.25); box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  }
+  .radar-tip-head { display: flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 5px; }
+  .radar-tip-row { display: flex; justify-content: space-between; gap: 12px; color: var(--text2); }
+  .radar-tip-row b { color: var(--text); font-family: var(--mono); }
+  .radar-tip-sub { margin-top: 3px; font-size: 9.5px; color: var(--text3); }
+  .radar-caption { font-size: 9.5px; line-height: 1.5; color: var(--text3); text-align: center; }
+  .radar-table { width: 100%; max-width: 620px; margin: 0 auto; border-collapse: collapse; font-size: 10px; }
+  .radar-table th, .radar-table td { padding: 5px 8px; border-bottom: 1px solid var(--border2); text-align: right; white-space: nowrap; }
+  .radar-table th:first-child, .radar-table td:first-child { text-align: left; color: var(--text2); }
+  .radar-table th { font-weight: 600; color: var(--text2); }
+  .radar-table th .radar-swatch { margin-right: 5px; vertical-align: middle; }
+  .radar-table td { font-family: var(--mono); color: var(--text); }
+  @media (max-width: 760px) { .radar-table { font-size: 9px; } .radar-table th, .radar-table td { padding: 4px 5px; } }
 </style>
 
 <!-- ===================== Digital Curation search ===================== -->
