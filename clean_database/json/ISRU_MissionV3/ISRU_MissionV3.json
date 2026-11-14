@@ -1114,8 +1114,8 @@
       "lox": 1
     },
     "rover_payloads_kg": {
-      "regolith": 4000,
-      "lox": 4000
+      "regolith": 5000,
+      "lox": 5000
     },
     "module_classes": {
       "HabitationModule": "Consumer",
