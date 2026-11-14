@@ -13977,14 +13977,14 @@ let up42MoonImg = null;
   }
 
   function setSavedScenarioComparisonMode(mode) {
-    savedScenarioComparisonMode = ['history', 'radar'].includes(mode) ? mode : 'moes';
+    savedScenarioComparisonMode = mode === 'history' ? 'history' : 'moes';
     drawSavedScenarioComparison();
   }
 
   function toggleSavedScenarioComparisonSelection(slug, checked) {
     const selected = new Set(savedScenarioComparisonSelection);
     if (checked) {
-      const limit = savedScenarioComparisonMode === 'radar' ? RADAR_MAX_SERIES : 4;
+      const limit = savedScenarioComparisonMode === 'history' ? 4 : RADAR_MAX_SERIES;
       if (selected.size >= limit) {
         alert(limit === 4
           ? 'Choose up to four completed scenarios at a time.'
@@ -14020,15 +14020,33 @@ let up42MoonImg = null;
     }).join(' ');
   }
 
-  function renderScenarioComparisonMoes(scenarios, baselineSlug) {
+  function renderScenarioComparisonMoes(scenarios, baselineSlug, options = {}) {
+    // options.colors: {slug: colour} links each card to its spider-chart series
+    // options.stacked: one card per row (used beside the spider chart)
     const rows = SCENARIO_COMPARISON_MOE_ROWS;
+    const colors = options.colors || {};
     const baselineSnapshot = scenarios.find(snapshot => snapshot.scenario_slug === baselineSlug) || scenarios[0];
     const baselineMetrics = getScenarioResultMetrics(baselineSnapshot);
-    return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;">${scenarios.map(snapshot => {
+    const gridColumns = options.stacked ? '1fr' : 'repeat(auto-fit,minmax(270px,1fr))';
+    const metricColumns = options.stacked ? 'repeat(auto-fit,minmax(96px,1fr))' : 'repeat(2,minmax(0,1fr))';
+    return `<div style="display:grid;grid-template-columns:${gridColumns};gap:12px;">${scenarios.map(snapshot => {
       const metrics = getScenarioResultMetrics(snapshot);
       const stamp = snapshot.results?.written_at || snapshot.saved_at;
       const isBaseline = snapshot.scenario_slug === baselineSnapshot?.scenario_slug;
-      return `<div style="border:1px solid ${isBaseline ? 'rgba(255,209,102,0.65)' : 'var(--border2)'};border-radius:8px;padding:12px;background:#07101a;"><div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--text1);"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(snapshot.name)}</span>${isBaseline ? '<span style="color:#ffd166;font-size:8px;white-space:nowrap;">BASELINE</span>' : ''}</div><div style="font-size:8px;color:var(--text3);margin:3px 0 10px;">${stamp ? `Completed ${new Date(stamp).toLocaleDateString()}` : 'Completed DES run'}</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">${rows.map(row => { const value = Number(metrics[row.key] || 0); const reference = Number(baselineMetrics[row.key] || 0); const delta = isBaseline || reference === 0 ? 'Baseline' : `${value >= reference ? '+' : ''}${((value - reference) / Math.abs(reference) * 100).toFixed(1)}%`; const deltaColor = isBaseline ? '#ffd166' : value >= reference ? '#7ee0b1' : '#ff7a8a'; return `<div><div style="font-size:8px;color:var(--text3);">${row.label}</div><div style="font-size:15px;font-weight:700;color:${row.color};margin-top:2px;">${formatComparisonNumber(value, row.unit)}</div><div style="font-size:8px;color:${deltaColor};margin-top:2px;">${delta}</div></div>`; }).join('')}</div></div>`;
+      const seriesColor = colors[snapshot.scenario_slug];
+      const swatch = seriesColor
+        ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${seriesColor};flex-shrink:0;"></span>`
+        : '';
+      const accent = seriesColor ? `box-shadow:inset 3px 0 0 ${seriesColor};` : '';
+      return `<div style="border:1px solid ${isBaseline ? 'rgba(255,209,102,0.65)' : 'var(--border2)'};border-radius:8px;padding:12px 12px 12px ${seriesColor ? 15 : 12}px;background:#07101a;${accent}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text1);"><span style="display:flex;align-items:center;gap:7px;min-width:0;">${swatch}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(snapshot.name)}</span></span>${isBaseline ? '<span style="color:#ffd166;font-size:8px;white-space:nowrap;">BASELINE</span>' : ''}</div><div style="font-size:8px;color:var(--text3);margin:3px 0 10px;">${stamp ? `Completed ${new Date(stamp).toLocaleDateString()}` : 'Completed DES run'}</div><div style="display:grid;grid-template-columns:${metricColumns};gap:10px;">${rows.map(row => {
+        const value = Number(metrics[row.key] || 0);
+        const reference = Number(baselineMetrics[row.key] || 0);
+        const delta = isBaseline || reference === 0 ? 'Baseline' : `${value >= reference ? '+' : ''}${((value - reference) / Math.abs(reference) * 100).toFixed(1)}%`;
+        // Energy consumed: an increase is a degradation
+        const improved = row.lowerIsBetter ? value <= reference : value >= reference;
+        const deltaColor = isBaseline ? '#ffd166' : improved ? '#7ee0b1' : '#ff7a8a';
+        return `<div><div style="font-size:8px;color:var(--text3);">${row.label}</div><div style="font-size:15px;font-weight:700;color:${row.color};margin-top:2px;">${formatComparisonNumber(value, row.unit)}</div><div style="font-size:8px;color:${deltaColor};margin-top:2px;">${delta}</div></div>`;
+      }).join('')}</div></div>`;
     }).join('')}</div>`;
   }
 
@@ -14080,7 +14098,8 @@ let up42MoonImg = null;
     return `${value.toLocaleString(undefined, {maximumFractionDigits: digits})} ${unit}`;
   }
 
-  function renderScenarioComparisonRadar(selected, allScenarios, baselineSlug) {
+  function renderScenarioComparisonRadar(selected, allScenarios, baselineSlug, options = {}) {
+    const withTable = options.table !== false;
     const shown = selected.slice(0, RADAR_MAX_SERIES);
     const hidden = selected.slice(RADAR_MAX_SERIES);
     const slots = radarAssignSlots(shown);
@@ -14172,8 +14191,20 @@ let up42MoonImg = null;
         </svg>
         <div class="radar-tip" role="tooltip"></div>
       </div>
-      <div class="radar-caption">Same MoEs as "Final MoEs". Each axis runs from 0 (centre) to the largest value among completed scenarios: further out = larger value. Energy consumed is better when smaller; totals grow with the simulation duration. Hover a point for its value.</div>
-      ${table}
+      <div class="radar-caption">Same MoEs as the cards. Each axis runs from 0 (centre) to the largest value among completed scenarios: further out = larger value. Energy consumed is better when smaller; totals grow with the simulation duration. Hover a point for its value.</div>
+      ${withTable ? table : ''}
+    </div>`;
+  }
+
+  // MoE cards on the left, spider chart on the right (stacked on narrow screens)
+  function renderScenarioComparisonSplit(selected, allScenarios, baselineSlug) {
+    const radar = renderScenarioComparisonRadar(selected, allScenarios, baselineSlug, {table: false});
+    const shown = selected.slice(0, RADAR_MAX_SERIES);
+    const colors = Object.fromEntries(shown.map(snapshot =>
+      [snapshot.scenario_slug, RADAR_COLORS[savedScenarioRadarSlots[snapshot.scenario_slug]]]));
+    return `<div class="cmp-split">
+      <div class="cmp-split-moes">${renderScenarioComparisonMoes(shown, baselineSlug, {colors, stacked: true})}</div>
+      <div class="cmp-split-radar">${radar}</div>
     </div>`;
   }
 
@@ -14256,11 +14287,10 @@ let up42MoonImg = null;
     }).join('');
     const visual = savedScenarioComparisonMode === 'history'
       ? renderScenarioComparisonHistory(selected)
-      : savedScenarioComparisonMode === 'radar'
-        ? renderScenarioComparisonRadar(selected, scenarios, savedScenarioComparisonBaselineSlug)
-        : renderScenarioComparisonMoes(selected, savedScenarioComparisonBaselineSlug);
+      : renderScenarioComparisonSplit(selected, scenarios, savedScenarioComparisonBaselineSlug);
+    const selectionHint = savedScenarioComparisonMode === 'history' ? 'select 2-4' : `select 2-${RADAR_MAX_SERIES}`;
     wrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:13px;">
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--border2);padding-bottom:12px;"><div style="flex:1 1 260px;min-width:0;"><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">Completed scenarios (select 2-4)</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;">${scenarioChoices}</div></div><div><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">View</div><div style="display:flex;flex-wrap:wrap;gap:4px;"><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('moes')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'moes' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Final MoEs</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('history')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'history' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Time histories</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('radar')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'radar' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Spider chart</button></div></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--border2);padding-bottom:12px;"><div style="flex:1 1 260px;min-width:0;"><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">Completed scenarios (${selectionHint})</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;">${scenarioChoices}</div></div><div><div style="font-size:9px;color:var(--text3);margin-bottom:6px;">View</div><div style="display:flex;flex-wrap:wrap;gap:4px;"><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('moes')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'moes' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Final MoEs</button><button type="button" class="btn" onclick="setSavedScenarioComparisonMode('history')" style="padding:7px 9px;font-size:9px;${savedScenarioComparisonMode === 'history' ? 'border-color:#4cc9f0;color:#4cc9f0;' : ''}">Time histories</button></div></div></div>
       ${visual}
     </div>`;
   }
@@ -15751,6 +15781,11 @@ window.addEventListener('load', () => {
 
 <!-- ===================== DES scenario comparison — spider chart ===================== -->
 <style>
+  /* Split view: MoE cards (left) + spider chart (right) */
+  .cmp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+  .cmp-split-radar { min-width: 0; }
+  .cmp-split-radar .radar-plot { max-width: none; }
+  @media (max-width: 1100px) { .cmp-split { grid-template-columns: 1fr; } }
   .radar-wrap { display: flex; flex-direction: column; gap: 10px; }
   .radar-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .radar-chip {
