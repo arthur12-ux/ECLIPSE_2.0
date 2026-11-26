@@ -9,7 +9,7 @@
       "height": 8
     },
     "metersPerUnit": 1,
-    "upAxis": "Z",
+    "upAxis": "Y",
     "massUnit": "kg",
     "lengthUnit": "m"
   },
@@ -43,21 +43,22 @@
     "cadVolumeScaleFactor": 8107.64186597
   },
   "metadata": {
-    "geometryRef": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
-    "cadFileName": "Habitat_Demonstration_Unit_part_2.usdz",
-    "cadUploadedAt": "2026-11-26T22:24:10.115Z",
+    "geometryRef": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
+    "cadFileName": "habitationmodule.usdc",
+    "cadUploadedAt": "2026-11-26T22:25:31.488Z",
     "glbPreviewRef": "outputs/cad_previews/Analyst_Agent/HabitationModule.glb",
-    "sourceCadPath": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+    "sourceCadPath": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
+    "cadImportedFromScenario": "ECLIPSE_Project",
     "cadDetectedSizeM": {
-      "length": 656.417,
-      "width": 458.526,
-      "height": 226.418
+      "length": 0.498,
+      "width": 0.559,
+      "height": 0.257
     },
-    "cadSourceUpAxis": "Z",
+    "cadSourceUpAxis": "Y",
     "cadSourceFrontAxis": "+X",
     "cadSourceUpAxisOverride": false,
     "cadSourceFrontAxisOverride": false,
-    "cadDetectedUpAxis": "Z",
+    "cadDetectedUpAxis": "Y",
     "cadDetectedMetersPerUnit": 1
   },
   "materialRef": null,
