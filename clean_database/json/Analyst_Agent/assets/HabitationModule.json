@@ -45,7 +45,7 @@
   "metadata": {
     "geometryRef": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
     "cadFileName": "habitationmodule.usdc",
-    "cadUploadedAt": "2026-11-26T22:44:48.259Z",
+    "cadUploadedAt": "2026-11-26T22:44:49.770Z",
     "glbPreviewRef": "outputs/cad_previews/Analyst_Agent/HabitationModule.glb",
     "sourceCadPath": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
     "cadDetectedSizeM": {
@@ -54,7 +54,7 @@
       "height": 0.257
     },
     "cadSourceUpAxis": "Y",
-    "cadSourceFrontAxis": "-X",
+    "cadSourceFrontAxis": "+X",
     "cadSourceUpAxisOverride": false,
     "cadSourceFrontAxisOverride": true,
     "cadDetectedUpAxis": "Y",
