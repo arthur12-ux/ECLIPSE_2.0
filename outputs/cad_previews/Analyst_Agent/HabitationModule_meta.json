@@ -1,274 +1,38 @@
 {
-  "written_at": 1795732083505,
+  "written_at": 1795732186455,
   "module_name": "HabitationModule",
-  "source_cad_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
-  "usd_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/habitationmodule.usdc",
+  "source_cad_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+  "usd_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
   "glb_path": "outputs/cad_previews/Analyst_Agent/HabitationModule.glb",
-  "up_axis": "Y",
+  "up_axis": "Z",
   "meters_per_unit": 1.0,
   "size_m": [
-    0.498,
-    0.559,
-    0.257
+    656.417,
+    458.526,
+    226.418
   ],
   "center_m": [
-    -0.079,
-    0.215,
-    0.118
+    28.071,
+    -25.059,
+    112.521
   ],
-  "mesh_count": 74,
+  "mesh_count": 1,
   "materials": [
     {
-      "path": "/scene/Materials/Material",
+      "path": "/root/_materials/lambert3SG",
       "properties": {
-        "diffuseColor": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.4
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_005",
-      "properties": {
-        "diffuseColor": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.5
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_001",
-      "properties": {
-        "diffuseColor": [
-          0.8,
-          0.8,
-          0.8
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.5
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_010",
-      "properties": {
-        "diffuseColor": [
-          0.8,
-          0.8,
-          0.8
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.4
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_008",
-      "properties": {
-        "diffuseColor": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.4449,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.1
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_028",
-      "properties": {
-        "diffuseColor": [
-          0.2684,
-          0.283,
-          0.2896
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.0,
         "metallic": 1.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.1591
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_027",
-      "properties": {
-        "diffuseColor": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 1.0
-      }
-    },
-    {
-      "path": "/scene/Materials/material_0",
-      "properties": {
-        "diffuseColor": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.6
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_051",
-      "properties": {
-        "diffuseColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 1.0
-      }
-    },
-    {
-      "path": "/scene/Materials/_1___Default_Steel",
-      "properties": {
-        "diffuseColor": [
-          0.5542,
-          0.5542,
-          0.5542
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 1.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.6081
-      }
-    },
-    {
-      "path": "/scene/Materials/_4___MetalicWhite",
-      "properties": {
-        "diffuseColor": [
-          1.0,
-          0.9551,
-          0.9551
-        ],
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.2088,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.0
+        "opacity": 0.0,
+        "roughness": 1.0,
+        "specular": 0.0,
+        "file": "@./textures/HDU_02.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
       }
     }
   ],
