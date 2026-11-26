@@ -1,276 +1,77 @@
 {
-  "written_at": "2026-10-22T01:09:48.190Z",
+  "written_at": 1795728104574,
   "module_name": "HabitationModule",
-  "usd_path": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/habitationmodule.usdc",
+  "source_cad_path": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/Habitat_Demonstration_Unit_part_1.usdz",
+  "usd_path": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/Habitat_Demonstration_Unit_part_1.usdz",
   "glb_path": "outputs/cad_previews/ISRU_MissionV3/HabitationModule.glb",
-  "up_axis": "Y",
-  "meters_per_unit": 0.01,
+  "up_axis": "Z",
+  "meters_per_unit": 1.0,
   "size_m": [
-    35.513,
-    3,
-    14.398
+    380.198,
+    165.929,
+    217.425
   ],
   "center_m": [
-    1.412,
-    0.61,
-    0.222
+    47.842,
+    0.005,
+    120.238
   ],
-  "mesh_count": 76,
+  "mesh_count": 1,
   "materials": [
     {
-      "path": "/scene/Materials/Material",
+      "path": "/root/_materials/lambert2SG",
       "properties": {
-        "diffuseColor": [
-          1,
-          1,
-          1
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.4
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_005",
-      "properties": {
-        "diffuseColor": [
-          1,
-          1,
-          1
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.5
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_001",
-      "properties": {
-        "diffuseColor": [
-          0.8,
-          0.8,
-          0.8
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.5
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_010",
-      "properties": {
-        "diffuseColor": [
-          0.8,
-          0.8,
-          0.8
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.4
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_008",
-      "properties": {
-        "diffuseColor": [
-          1,
-          1,
-          1
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0.4449,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.1
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_028",
-      "properties": {
-        "diffuseColor": [
-          0.2684,
-          0.283,
-          0.2896
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 1,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.1591
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_027",
-      "properties": {
-        "diffuseColor": [
-          1,
-          1,
-          1
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 1
-      }
-    },
-    {
-      "path": "/scene/Materials/material_0",
-      "properties": {
-        "diffuseColor": [
-          1,
-          1,
-          1
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.6
-      }
-    },
-    {
-      "path": "/scene/Materials/Material_051",
-      "properties": {
-        "diffuseColor": [
-          0,
-          0,
-          0
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 1
-      }
-    },
-    {
-      "path": "/scene/Materials/_1___Default_Steel",
-      "properties": {
-        "diffuseColor": [
-          0.5542,
-          0.5542,
-          0.5542
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 1,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.6081
-      }
-    },
-    {
-      "path": "/scene/Materials/_4___MetalicWhite",
-      "properties": {
-        "diffuseColor": [
-          1,
-          0.9551,
-          0.9551
-        ],
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0.2088,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.0,
+        "metallic": 1.0,
+        "opacity": 0.0,
+        "roughness": 1.0,
+        "specular": 0.0,
+        "file": "@./textures/HDU_01.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
       }
     }
   ],
-  "source_cad_path": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/habitationmodule.usdc",
-  "imported_from_scenario": "ECLIPSE_Project"
+  "source_metadata": {
+    "written_at": 1795728104573,
+    "source_file": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/Habitat_Demonstration_Unit_part_1.usdz",
+    "file_name": "Habitat_Demonstration_Unit_part_1.usdz",
+    "file_extension": ".usdz",
+    "cad_format": "USDZ",
+    "file_size_bytes": 626773,
+    "converted_usd_path": "clean_database/cad_models/ISRU_MissionV3/HabitationModule/Habitat_Demonstration_Unit_part_1.usdz",
+    "authoring_tool": null,
+    "source_up_axis": "Z",
+    "source_front_axis": "+X",
+    "target_up_axis": "Z",
+    "orientation_correction_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "units": {
+      "unit": "metre",
+      "scale_to_m": 1.0,
+      "source": "USD stage metersPerUnit"
+    },
+    "geometry": {
+      "extraction_status": "success",
+      "surface_area_m2": 229046.12724732712,
+      "center_of_mass_m": [
+        27.892446214940332,
+        -0.6491982064391524,
+        90.4423561004548
+      ],
+      "center_of_mass_source": "centroid",
+      "is_watertight": false
+    },
+    "extraction_status": {
+      "conversion": "not_required",
+      "metadata": "success"
+    }
+  }
 }
