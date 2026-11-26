@@ -23,6 +23,16 @@ scenario writes, results reads, and remote map assets all use this repository.
    (scenario/CAD uploads) and **Actions: read/write** (workflow dispatch and monitoring).
    A classic token needs the appropriate `repo` or `public_repo` scope.
 
+### Working on a branch
+
+By default the interface reads from and writes to `main`: CAD uploads, scenario saves, Run Graph, CAD conversion and DES runs all commit there. To test changes without touching `main`, add `?branch=<name>` to the URL:
+
+```text
+http://localhost:8000/ScenarioIndex.html?branch=Digital_curation_merge
+```
+
+Every read, write and workflow run then uses that branch, and a badge in the bottom-right corner shows the active branch (orange when it is not `main`). The branch must already exist on GitHub and contain the `.github/workflows/` files. To use the interface version from your branch, serve your local checkout with `python3 -m http.server 8000` from the repository root. When the tests work, merge the branch into `main` through a pull request.
+
 Workflows use the new repository's own `GITHUB_TOKEN` and the dispatched branch;
 they do not require credentials or a checkout of the original repository.
 The Omniverse extension must also be loaded from this copy: its pull button updates

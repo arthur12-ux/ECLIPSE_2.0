@@ -9454,7 +9454,43 @@ let up42MoonImg = null;
 
   const GH_OWNER = "arthur12-ux";
   const GH_REPO  = "ECLIPSE_2.0";
-  const GH_REF   = "main";
+  // Branch the interface reads from, writes to and dispatches workflows on.
+  // Defaults to main; override with ?branch=<name> to work on a branch.
+  const GH_DEFAULT_REF = "main";
+  const GH_REF = (() => {
+    const requested = (new URLSearchParams(location.search).get('branch') || '').trim();
+    if (!requested) return GH_DEFAULT_REF;
+    const isValidRef = /^[A-Za-z0-9._\/-]+$/.test(requested) &&
+      !requested.startsWith('-') && !requested.startsWith('/') && !requested.endsWith('/') &&
+      !requested.includes('..') && !requested.includes('//') && !requested.endsWith('.lock');
+    if (!isValidRef) {
+      alert(`Invalid branch name "${requested}". The interface will use "${GH_DEFAULT_REF}".`);
+      return GH_DEFAULT_REF;
+    }
+    return requested;
+  })();
+
+  (function showActiveBranchBadge() {
+    const render = () => {
+      const isDefault = GH_REF === GH_DEFAULT_REF;
+      const badge = document.createElement('div');
+      badge.id = 'ghBranchBadge';
+      badge.title = isDefault
+        ? 'Uploads, CAD, graph and DES runs are written to main. Add ?branch=<name> to the URL to work on a branch.'
+        : `Uploads, CAD, graph and DES runs are written to the "${GH_REF}" branch, not to main.`;
+      badge.textContent = `Branch: ${GH_REF}`;
+      badge.style.cssText = [
+        'position:fixed', 'right:12px', 'bottom:12px', 'z-index:2147483000',
+        'padding:6px 10px', 'border-radius:6px', 'font:600 12px/1.2 system-ui,sans-serif',
+        'box-shadow:0 2px 8px rgba(0,0,0,.35)', 'pointer-events:auto', 'cursor:default',
+        isDefault ? 'background:#2d333b;color:#cdd9e5;border:1px solid #444c56'
+                  : 'background:#9a6700;color:#fff;border:1px solid #d4a72c'
+      ].join(';');
+      document.body.appendChild(badge);
+    };
+    if (document.body) render();
+    else document.addEventListener('DOMContentLoaded', render);
+  })();
   // This workflow runs:
   // step 1 SysML parsing -> JSON
   // step 2 connectivity graph generation
