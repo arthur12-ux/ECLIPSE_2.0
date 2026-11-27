@@ -1,49 +1,55 @@
 {
-  "written_at": 1795745463370,
+  "written_at": 1795745521849,
   "module_name": "LaunchLandingZone",
-  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
-  "usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
+  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+  "usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
   "glb_path": "outputs/cad_previews/Analyst_Agent/LaunchLandingZone.glb",
-  "up_axis": "Y",
+  "up_axis": "Z",
   "meters_per_unit": 1.0,
   "size_m": [
-    5.699,
-    6.581,
-    0.244
+    1.019,
+    0.867,
+    2.464
   ],
   "center_m": [
+    0.189,
     -0.0,
-    0.949,
-    0.122
+    1.232
   ],
   "mesh_count": 1,
   "materials": [
     {
-      "path": "/scene/Materials/material_0",
+      "path": "/root/_materials/mobilelauncher_mat",
       "properties": {
-        "emissiveColor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "metallic": 0.0,
-        "normal": [
-          0.0,
-          0.0,
-          1.0
-        ],
-        "occlusion": 1.0,
-        "roughness": 0.6,
-        "varname": "st0",
-        "fallback": [
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "file": "@0/material_0_baseColor.jpg@",
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.8586,
+        "specular": 0.0,
+        "file": "@./textures/mobilelauncher_d.png@",
+        "sourceColorSpace": "sRGB",
         "wrapS": "repeat",
-        "wrapT": "repeat"
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mobilelauncher_railings_mat",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.8586,
+        "specular": 0.0,
+        "file": "@./textures/mobilelauncher_railings_d_o.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
       }
     }
   ],
