@@ -73,18 +73,21 @@ Leave it disabled for a power-constrained simulation. In that mode, power genera
 
 ## 4. Submit CAD Models
 
-In **3. Model Submission**, select a module from the left-hand list. For each module, choose one of these paths:
+In **3. Model Submission**, select a module from the left-hand list. Each module shows the CAD file it uses and a status dot: green = published, orange = new file not published yet, empty = no CAD.
 
-1. Drag and drop a USD, USDA, USDC, USDZ, STEP, STP, STL, or OBJ file into the upload area, or click the area to browse.
-2. Click **Upload & Publish selected CAD**.
+The **CAD in use** card at the top shows the active file, its path in the repository, the branch, and an **Open on GitHub** link. To change it, use **Replace the CAD** and pick one of the two tabs:
 
-Or reuse a model that already exists:
+**Upload a new file**
 
-1. Open **Load a CAD from a scenario or the CAD library...**.
-2. Choose a model from a scenario group or from the shared CAD library.
-3. Click **Load**.
+1. Drag and drop a USD, USDA, USDC, USDZ, STEP, STP, STL, or OBJ file into the upload area, or click the area to browse. The file is only in your browser at this point.
+2. Click **Publish <file name>**. The file is stored in `clean_database/cad_models/<Scenario>/<Module>/`, converted, and the 3D preview refreshes.
 
-The CAD picker shows only scenarios and assets that actually contain a CAD file. The shared CAD library at `clean_database/cad_models/` is also available. Use **Save & Publish All** after uploading several models; it publishes every pending CAD change.
+**Reuse a stored CAD**
+
+1. Open the picker. It lists only the CAD files stored for this module (library default and other scenarios), each distinct file once. Type in the filter field to narrow the list.
+2. Choose a model and click **Use this CAD**.
+
+When several modules have a new file, **Publish all (N)** in the left panel publishes all of them. The module's **SysML attributes** and **Ports** are shown below, read-only, from the scenario SysML model. **Material & units** (advanced) are saved automatically and written with the next publish.
 
 ### Set CAD orientation
 
@@ -93,7 +96,7 @@ Use the preview panel to configure the source axes before visualization.
 - For **STEP, STP, STL, and OBJ** files, select the correct **Source up** axis if the raw source needs reorientation. The interface converts the file again and reports `USD rebuilt as ... Ready for Omniverse` when finished. Wait for that confirmation.
 - For **USD, USDA, USDC, and USDZ** files, the pipeline automatically detects the USD up axis. No blue up-axis control is shown. Select only the **Source front** direction.
 
-The source front indicates the direction the model faces in Omniverse. Choose `+X`, `-X`, `+Y`, `-Y`, `+Z`, or `-Z`; a direction parallel to the source up axis is unavailable. The front choice saves immediately and the DES waits for any pending save before it starts. You do not need to press **Save & Publish All** solely after changing the front direction.
+The source front indicates the direction the model faces in Omniverse. Choose `+X`, `-X`, `+Y`, `-Y`, `+Z`, or `-Z`; a direction parallel to the source up axis is unavailable. The front choice saves immediately and the DES waits for any pending save before it starts. You do not need to press **Publish all** solely after changing the front direction.
 
 ## 5. Select the Site
 

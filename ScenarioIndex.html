@@ -2722,19 +2722,16 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
       <div class="assembly-scroll" style="flex:1;">
         <div class="tree-box" id="assemblyTree"></div>
       </div>
-      <!-- Global publish button at bottom of left panel -->
+      <!-- Publish every module that has a new, unpublished CAD -->
       <div style="padding:14px;border-top:1px solid var(--border);">
-        <button id="publishAllBtn" class="btn btn-primary" style="width:100%;padding:13px;" onclick="publishAll()">
-          🚀 Save &amp; Publish All
+        <button id="publishAllBtn" class="btn btn-primary" style="width:100%;padding:13px;" onclick="publishAll(s3PendingModules())" disabled>
+          🚀 Publish all
         </button>
         <div id="publishStatus" class="mini-note" style="margin-top:8px;text-align:center;"></div>
-        <!-- Dot legend -->
-        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;font-size:10px;color:var(--text2);">
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4a5568;margin-right:6px;"></span>No file</span>
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00ff9d;margin-right:6px;"></span>File ready</span>
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffd166;margin-right:6px;"></span>Uploading</span>
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00d4ff;margin-right:6px;"></span>Uploaded</span>
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a855f7;margin-right:6px;"></span>3D preview ready</span>
+        <div class="s3-legend">
+          <span><span class="module-dot s3-state-published"></span>Published</span>
+          <span><span class="module-dot s3-state-pending"></span>Not published yet</span>
+          <span><span class="module-dot s3-state-none"></span>No CAD</span>
         </div>
       </div>
     </div>
@@ -2751,11 +2748,35 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
       <div class="assembly-scroll consequence-scroll">
         <div class="form-grid">
 
-          <!-- 3D Viewer -->
+          <!-- CAD currently used by the selected module (filled by s3RenderCurrentCad) -->
+          <div class="full s3-card" id="s3CurrentCad">
+            <div class="s3-card-head">
+              <span class="s3-kicker">CAD in use</span>
+              <span class="s3-branch" id="s3CadBranch"></span>
+            </div>
+            <div class="s3-cad-row">
+              <span class="ccp-chip" id="s3CadChip" hidden></span>
+              <div class="s3-cad-main">
+                <div class="s3-cad-name" id="s3CadName">Select a module on the left.</div>
+                <div class="s3-cad-path" id="s3CadPath"></div>
+              </div>
+              <a class="s3-cad-link" id="s3CadLink" target="_blank" rel="noopener" hidden>Open on GitHub ↗</a>
+            </div>
+            <div class="s3-cad-pending" id="s3CadPending" hidden></div>
+          </div>
+
+          <!-- 3D Viewer (filled by showModelViewer) -->
           <div class="full" id="viewer3dWrap" style="display:none;"></div>
 
-          <!-- Drag & Drop -->
-          <div class="full">
+          <!-- Replace the CAD: upload a new file OR reuse one already stored -->
+          <div class="full s3-card">
+            <div class="s3-card-head"><span class="s3-kicker">Replace the CAD</span></div>
+            <div class="s3-tabs" role="tablist" aria-label="How to replace the CAD">
+              <button type="button" class="s3-tab active" role="tab" aria-selected="true" data-s3-tab="upload" onclick="s3SetCadTab('upload')">Upload a new file</button>
+              <button type="button" class="s3-tab" role="tab" aria-selected="false" data-s3-tab="reuse" onclick="s3SetCadTab('reuse')">Reuse a stored CAD</button>
+            </div>
+
+            <div class="s3-pane" data-s3-pane="upload" role="tabpanel">
             <div id="cadDropZone" style="
               border:2px dashed var(--border2); border-radius:12px;
               padding:24px 20px; text-align:center;
@@ -2773,14 +2794,18 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
               <input id="cadFileInput" type="file" accept=".usd,.usda,.usdc,.usdz,.step,.stp,.stl,.obj" style="display:none;" onchange="handleCadFile(event.target.files[0]); event.target.value = ''">
             </div>
             <div id="cadUploadStatus" class="mini-note" style="margin-top:8px;">No CAD file loaded yet.</div>
-            <button id="publishCurrentCadBtn" class="btn btn-primary" type="button" disabled style="width:100%;margin-top:10px;" onclick="publishCurrentCad()">Upload &amp; Publish this CAD</button>
-            <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
-              <select id="cadReuseSelect" style="flex:1;min-width:0;" onchange="rememberCadReuseSelection(this.value)">
-                <option value="">Load a CAD from a scenario or the CAD library...</option>
-              </select>
-              <button id="cadReuseBtn" class="btn btn-secondary" type="button" disabled onclick="loadCadFromScenario()">Load</button>
+              <button id="publishCurrentCadBtn" class="btn btn-primary" type="button" disabled style="width:100%;margin-top:10px;" onclick="publishCurrentCad()">Publish this file</button>
             </div>
-            <div id="cadReuseStatus" class="mini-note" style="margin-top:5px;">Choose a CAD to copy into this scenario.</div>
+
+            <div class="s3-pane" data-s3-pane="reuse" role="tabpanel" hidden>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <select id="cadReuseSelect" style="flex:1;min-width:0;" onchange="rememberCadReuseSelection(this.value)">
+                  <option value="">Load a CAD from a scenario or the CAD library...</option>
+                </select>
+                <button id="cadReuseBtn" class="btn btn-secondary" type="button" disabled onclick="loadCadFromScenario()">Use this CAD</button>
+              </div>
+              <div id="cadReuseStatus" class="mini-note" style="margin-top:5px;">Pick a CAD already stored for this module: the library default or one from another scenario.</div>
+            </div>
           </div>
 
           <!-- Hidden metadata fields kept for Step 3 logic/state -->
@@ -2789,50 +2814,50 @@ body > header.topbar .nav::-webkit-scrollbar { display: none; }
           <input id="sourceFileName" type="hidden">
           <input id="cadMass" type="hidden">
 
-          <!-- Material -->
-          <div class="form-section-title">Material</div>
-          <div class="field span-12" id="materialFromUsdWrap" style="display:none;">
-            <label>Material detected in USD file</label>
-            <input id="materialFromUsd" type="text" readonly style="color:var(--accent2);">
-          </div>
-          <div class="field span-12" id="materialLibraryWrap">
-            <label>Select from material library</label>
-            <select id="materialSelect" onchange="onMaterialSelect(this.value)">
-              <option value="">— loading library… —</option>
-            </select>
-          </div>
-          <div id="materialPropsWrap" style="display:none; grid-column:span 12;">
-            <div id="materialPropsTitle" class="form-section-title">Material Look</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;">
-              <div class="field"><label>Main Color</label><input id="matDiffuse" type="text" readonly></div>
-              <div class="field"><label>Glow Color</label><input id="matEmissive" type="text" readonly></div>
-              <div class="field"><label>Metal Level</label><input id="matMetallic" type="text" readonly></div>
-              <div class="field"><label>Surface Detail</label><input id="matNormal" type="text" readonly></div>
-              <div class="field"><label>Shadow Depth</label><input id="matOcclusion" type="text" readonly></div>
-              <div class="field"><label>Matte Level</label><input id="matRoughness" type="text" readonly></div>
-            </div>
-          </div>
-
-          <!-- Units -->
-          <div class="form-section-title">Units</div>
-          <div class="field span-3"><label>metersPerUnit</label><input id="metersPerUnit" type="number" value="1"></div>
-          <div class="field span-3"><label>upAxis</label><select id="upAxis"><option>Z</option><option>Y</option><option>X</option></select></div>
-          <div class="field span-3"><label>massUnit</label><select id="massUnit"><option>kg</option><option>g</option><option>lb</option></select></div>
-          <div class="field span-3"><label>lengthUnit</label><select id="lengthUnit"><option>m</option><option>cm</option><option>mm</option></select></div>
-
-          <!-- SysML Attributes -->
+          <!-- SysML attributes and ports of the selected module (filled by renderSysmlAttributes) -->
           <div class="custom-attrs" id="sysmlAttrs" style="display:none;"></div>
 
-          <!-- Per-module save -->
-          <div class="form-section-title">Actions</div>
-          <div class="field span-6">
-            <button class="btn btn-secondary" style="width:100%;padding:11px;" onclick="saveModuleMeta()">
-              💾 Save metadata for this module
-            </button>
-          </div>
+          <!-- Material and units: optional, saved automatically and sent with the next publish -->
+          <details class="full s3-advanced" id="s3Advanced">
+            <summary>
+              <span>Material &amp; units</span>
+              <span class="s3-summary-note">Advanced · saved automatically, sent with the next publish</span>
+            </summary>
+            <div class="form-grid s3-advanced-grid">
+              <div class="form-section-title">Material</div>
+            <div class="field span-12" id="materialFromUsdWrap" style="display:none;">
+              <label>Material detected in USD file</label>
+              <input id="materialFromUsd" type="text" readonly style="color:var(--accent2);">
+            </div>
+            <div class="field span-12" id="materialLibraryWrap">
+              <label>Select from material library</label>
+              <select id="materialSelect" onchange="onMaterialSelect(this.value)">
+                <option value="">— loading library… —</option>
+              </select>
+            </div>
+            <div id="materialPropsWrap" style="display:none; grid-column:span 12;">
+              <div id="materialPropsTitle" class="form-section-title">Material Look</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;">
+                <div class="field"><label>Main Color</label><input id="matDiffuse" type="text" readonly></div>
+                <div class="field"><label>Glow Color</label><input id="matEmissive" type="text" readonly></div>
+                <div class="field"><label>Metal Level</label><input id="matMetallic" type="text" readonly></div>
+                <div class="field"><label>Surface Detail</label><input id="matNormal" type="text" readonly></div>
+                <div class="field"><label>Shadow Depth</label><input id="matOcclusion" type="text" readonly></div>
+                <div class="field"><label>Matte Level</label><input id="matRoughness" type="text" readonly></div>
+              </div>
+            </div>
+
+              <div class="form-section-title">Units</div>
+              <div class="field span-3"><label>Scale <code>metersPerUnit</code></label><input id="metersPerUnit" type="number" value="1"></div>
+              <div class="field span-3"><label>Up axis <code>upAxis</code></label><select id="upAxis"><option>Z</option><option>Y</option><option>X</option></select></div>
+              <div class="field span-3"><label>Mass unit</label><select id="massUnit"><option>kg</option><option>g</option><option>lb</option></select></div>
+              <div class="field span-3"><label>Length unit</label><select id="lengthUnit"><option>m</option><option>cm</option><option>mm</option></select></div>
+              <div class="mini-note full">Scale = how many metres one unit of the CAD file represents. Scale and up axis are detected from the CAD when possible (the fields are then locked). The orientation in the scene is set in the CAD axes panel next to the 3D preview.</div>
+            </div>
+          </details>
 
           <div class="success-banner" id="saveBanner" style="display:none;">
-            ✓ Metadata saved and CAD file uploaded to repo.
+            ✓ Saved.
           </div>
 
         </div>
@@ -11125,8 +11150,9 @@ let up42MoonImg = null;
     const button = document.getElementById('publishCurrentCadBtn');
     if (!button) return;
     const file = currentModuleName ? moduleFiles[currentModuleName] : null;
-    button.disabled = !file;
-    button.textContent = file ? 'Upload & Publish selected CAD' : 'Upload & Publish this CAD';
+    const pending = !!file && s3IsPending(currentModuleName);
+    button.disabled = !pending;
+    button.textContent = pending ? `Publish ${file.name}` : (file ? `${file.name} published ✓` : 'Publish this file');
   }
 
   const CAD_FILE_EXTENSION = /\.(?:usd|usda|usdc|usdz|step|stp|stl|obj)$/i;
@@ -11712,12 +11738,13 @@ let up42MoonImg = null;
     const status = document.getElementById('cadUploadStatus');
     if (status) {
       status.textContent =
-        `File ready: ${file.name} (${(file.size / 1024).toFixed(0)} KB) - preview outdated until publish finishes.`;
+        `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB) is loaded in your browser, not published yet. ` +
+        `Click "Publish ${file.name}" to store it and refresh the preview.`;
     }
 
     const wrap = document.getElementById('viewer3dWrap');
     if (wrap && wrap.style.display !== 'none') {
-      if (status) status.textContent = `File ready: ${file.name} - Upload & Publish to regenerate preview.`;
+      if (status) status.textContent = `${file.name} is loaded in your browser, not published yet. Click "Publish ${file.name}" to store it and refresh the preview.`;
     }
   }
 
@@ -12241,7 +12268,7 @@ let up42MoonImg = null;
     });
   }
 
-  function saveModuleMeta() {
+  function saveModuleMeta(options = {}) {
     if (!currentModuleName) return;
     const existing = moduleMetaCache[currentModuleName] || {};
 
@@ -12254,6 +12281,9 @@ let up42MoonImg = null;
       massUnit: document.getElementById('massUnit')?.value || 'kg',
       lengthUnit: document.getElementById('lengthUnit')?.value || 'm'
     };
+    // Material and unit fields save automatically on change (silent); they are
+    // written to the asset JSON with the next publish.
+    if (options.silent) return;
 
     updateModuleDot(currentModuleName, 'uploading');
     setTimeout(() => updateModuleDot(currentModuleName, moduleFiles[currentModuleName] ? 'ready' : 'pending'), 600);
@@ -12293,18 +12323,174 @@ let up42MoonImg = null;
     s('lengthUnit', saved.lengthUnit);
   }
 
-  function updateModuleDot(moduleName, state) {
-    const colors = {
-      pending: '#4a5568',
-      ready: '#00ff9d',
-      uploading: '#ffd166',
-      done: '#00d4ff',
-      preview: '#a855f7',
-      error: '#ff7a8a'
-    };
+  // ── Step 3 module status ────────────────────────────────────────────
+  // Callers still report the detailed pipeline states (pending, ready, uploading,
+  // done, preview, error). The list shows them as: published / not published yet /
+  // no CAD, plus a transient "publishing" or "error" state.
+  const s3TransientState = Object.create(null);
+  const s3KnownCadPaths = Object.create(null); // `${scenario}/${module}` -> source CAD path
+  let s3SummarySeq = 0;
 
-    const dot = document.querySelector(`[data-module="${moduleName}"] .module-dot`);
-    if (dot) dot.style.background = colors[state] || colors.pending;
+  function s3CadKey(moduleName) {
+    return `${getCadScenarioSlug()}/${moduleName}`;
+  }
+
+  function s3IsPending(moduleName) {
+    return !!moduleFiles[moduleName] && cadPreviewState[moduleName]?.previewStale !== false;
+  }
+
+  function s3PendingModules() {
+    return Object.keys(moduleFiles).filter(s3IsPending);
+  }
+
+  function s3StoredCadPath(moduleName) {
+    const cached = moduleMetaCache[moduleName] || {};
+    const path = cached.sourceCadPath || s3KnownCadPaths[s3CadKey(moduleName)] || '';
+    if (path) return path;
+    const fileName = cached.cadSourceFile || '';
+    return fileName ? `${cadFolderPath(moduleName)}/${fileName}` : '';
+  }
+
+  function s3ModuleState(moduleName) {
+    if (s3TransientState[moduleName]) return s3TransientState[moduleName];
+    if (s3IsPending(moduleName)) return 'pending';
+    return s3StoredCadPath(moduleName) ? 'published' : 'none';
+  }
+
+  function s3FormatOf(path) {
+    const ext = (String(path).match(/\.([a-z0-9]+)$/i) || [, ''])[1].toLowerCase();
+    const kind = /^usd[acz]?$/.test(ext) ? 'usd' : (ext === 'step' || ext === 'stp') ? 'step' : 'mesh';
+    return { label: ext.toUpperCase() || 'CAD', kind };
+  }
+
+  function s3GithubFileUrl(path) {
+    const ref = String(GH_REF).split('/').map(encodeURIComponent).join('/');
+    const file = String(path).split('/').map(encodeURIComponent).join('/');
+    return `https://github.com/${GH_OWNER}/${GH_REPO}/blob/${ref}/${file}`;
+  }
+
+  function s3RefreshModuleRow(moduleName) {
+    const row = [...document.querySelectorAll('#assemblyTree .tree-node-row')]
+      .find(candidate => candidate.getAttribute('data-module') === moduleName);
+    if (!row) return;
+    const state = s3ModuleState(moduleName);
+    const dot = row.querySelector('.module-dot');
+    if (dot) {
+      dot.style.background = '';
+      dot.className = `module-dot s3-state-${state}`;
+    }
+    const sub = row.querySelector('.tree-cad');
+    if (sub) {
+      const stored = s3StoredCadPath(moduleName).split('/').pop();
+      const texts = {
+        uploading: 'Publishing…',
+        error: 'Publish failed - try again',
+        pending: `${moduleFiles[moduleName]?.name || 'New file'} · not published`,
+        published: stored,
+        none: 'No CAD yet'
+      };
+      sub.textContent = texts[state] || '';
+      sub.className = `tree-cad ${state}`;
+      sub.title = sub.textContent;
+    }
+  }
+
+  function s3RenderCurrentCad(moduleName = currentModuleName) {
+    const nameEl = document.getElementById('s3CadName');
+    const pathEl = document.getElementById('s3CadPath');
+    const chipEl = document.getElementById('s3CadChip');
+    const linkEl = document.getElementById('s3CadLink');
+    const pendingEl = document.getElementById('s3CadPending');
+    const branchEl = document.getElementById('s3CadBranch');
+    if (!nameEl || !pathEl || !chipEl || !linkEl || !pendingEl) return;
+
+    if (branchEl) branchEl.textContent = `branch ${GH_REF}`;
+    pendingEl.hidden = true;
+
+    if (!moduleName) {
+      nameEl.textContent = 'Select a module on the left.';
+      pathEl.textContent = '';
+      chipEl.hidden = true;
+      linkEl.hidden = true;
+      return;
+    }
+
+    const stored = s3StoredCadPath(moduleName);
+    if (stored) {
+      const format = s3FormatOf(stored);
+      chipEl.hidden = false;
+      chipEl.className = `ccp-chip ${format.kind}`;
+      chipEl.textContent = format.label;
+      nameEl.textContent = stored.split('/').pop();
+      pathEl.textContent = stored;
+      linkEl.hidden = false;
+      linkEl.href = s3GithubFileUrl(stored);
+    } else {
+      chipEl.hidden = true;
+      linkEl.hidden = true;
+      nameEl.textContent = `No CAD stored for ${moduleName} yet`;
+      pathEl.textContent = 'Upload a file or reuse a stored CAD below.';
+    }
+
+    const state = s3ModuleState(moduleName);
+    const file = moduleFiles[moduleName];
+    if (state === 'uploading') {
+      pendingEl.hidden = false;
+      pendingEl.textContent = `Publishing ${file?.name || 'the new CAD'}… the CAD above stays in use until the conversion finishes.`;
+    } else if (state === 'pending' && file) {
+      pendingEl.hidden = false;
+      pendingEl.textContent =
+        `New file waiting: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB) is only in your browser. ` +
+        `Click "Publish ${file.name}" below to store it; until then the CAD above stays in use.`;
+    } else if (state === 'error') {
+      pendingEl.hidden = false;
+      pendingEl.textContent = 'The last publish failed. Check the status below and try again.';
+    }
+  }
+
+  // Reads each module's preview metadata to learn which CAD file it uses, so the
+  // module list can show it without selecting every module.
+  async function s3LoadModuleCadSummary(moduleNames) {
+    const seq = ++s3SummarySeq;
+    const slug = getCadScenarioSlug();
+    await Promise.all(moduleNames.map(async moduleName => {
+      try {
+        const meta = await fetchCadMetaWithSha(moduleName, Date.now());
+        if (seq !== s3SummarySeq || slug !== getCadScenarioSlug()) return;
+        const data = meta?.data || {};
+        let path = data.source_cad_path || data.source_metadata?.source_file || '';
+        if (path && !path.includes('/')) path = `${cadFolderPath(moduleName)}/${path}`;
+        if (path) s3KnownCadPaths[`${slug}/${moduleName}`] = path;
+        s3RefreshModuleRow(moduleName);
+        if (moduleName === currentModuleName) s3RenderCurrentCad(moduleName);
+      } catch (error) {
+        console.warn('[Step 3] CAD summary', moduleName, error);
+      }
+    }));
+    if (seq === s3SummarySeq) updatePublishCounter();
+  }
+
+  function s3SetCadTab(tab) {
+    const chosen = tab === 'reuse' ? 'reuse' : 'upload';
+    document.querySelectorAll('[data-s3-tab]').forEach(button => {
+      const active = button.getAttribute('data-s3-tab') === chosen;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    document.querySelectorAll('[data-s3-pane]').forEach(pane => {
+      pane.hidden = pane.getAttribute('data-s3-pane') !== chosen;
+    });
+    try { sessionStorage.setItem('s3CadTab', chosen); } catch {}
+  }
+
+  function updateModuleDot(moduleName, state) {
+    if (state === 'uploading' || state === 'done') s3TransientState[moduleName] = 'uploading';
+    else if (state === 'error') s3TransientState[moduleName] = 'error';
+    else delete s3TransientState[moduleName];
+
+    s3RefreshModuleRow(moduleName);
+    if (moduleName === currentModuleName) s3RenderCurrentCad(moduleName);
+    updatePublishCounter();
   }
 
   function updatePublishCounter() {
@@ -12317,13 +12503,20 @@ let up42MoonImg = null;
         };
     const visibleModules = getGraphActiveNodeList(graphData);
     const total = visibleModules.length;
-    const ready = visibleModules.filter(name => !!moduleFiles[name]).length;
+    const withCad = visibleModules.filter(name => s3StoredCadPath(name) || moduleFiles[name]).length;
+    const pending = s3PendingModules().length;
 
     const counter = document.getElementById('step3Counter');
-    if (counter) counter.textContent = `${ready} / ${total} files ready`;
+    if (counter) {
+      counter.textContent = `${withCad} / ${total} modules have a CAD` +
+        (pending ? ` · ${pending} not published` : '');
+    }
 
     const btn = document.getElementById('publishAllBtn');
-    if (btn) btn.disabled = ready === 0;
+    if (btn && btn.textContent.trim() !== 'Publishing...') {
+      btn.disabled = pending === 0;
+      btn.textContent = pending ? `🚀 Publish all (${pending})` : '🚀 Publish all';
+    }
   }
 
   function populateStep3(data, options = {}) {
@@ -12343,9 +12536,11 @@ let up42MoonImg = null;
       row.setAttribute('data-module', name);
       row.style.cssText = 'display:flex;align-items:center;';
       row.innerHTML = `
-        <span class="module-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;
-          background:${moduleFiles[name] ? '#00ff9d' : '#4a5568'};margin-right:8px;flex-shrink:0;transition:background 0.3s;"></span>
-        <div class="tree-label" style="flex:1;">${name}</div>
+        <span class="module-dot s3-state-none"></span>
+        <div style="flex:1;min-width:0;">
+          <div class="tree-label">${name}</div>
+          <div class="tree-cad none"></div>
+        </div>
         <div class="tree-type">${part.ports?.length ?? 0} ports</div>
       `;
 
@@ -12364,7 +12559,11 @@ let up42MoonImg = null;
 
         if (moduleFiles[name]) {
           const s = document.getElementById('cadUploadStatus');
-          if (s) s.textContent = `File ready: ${moduleFiles[name].name}`;
+          if (s) {
+            s.textContent = s3IsPending(name)
+              ? `${moduleFiles[name].name} is loaded in your browser, not published yet.`
+              : `${moduleFiles[name].name} published.`;
+          }
 
           const n = document.getElementById('sourceFileName');
           if (n) n.value = moduleFiles[name].name;
@@ -12375,10 +12574,13 @@ let up42MoonImg = null;
 
         restoreModuleMeta(name);
         updateCurrentCadPublishButton();
+        s3RenderCurrentCad(name);
       };
 
       box.appendChild(row);
+      s3RefreshModuleRow(name);
     });
+    s3LoadModuleCadSummary(nodes.filter(name => sysmlPartsCache[name]));
 
     const preferredModule = options.preferredModule || currentModuleName;
     const rows = [...box.querySelectorAll('.tree-node-row')];
@@ -12611,8 +12813,9 @@ let up42MoonImg = null;
       }
     }
 
-    btn.textContent = 'Save & Publish All';
+    btn.textContent = '🚀 Publish all';
     btn.disabled = false;
+    updatePublishCounter();
     updateCurrentCadPublishButton();
 
     if (pubStatus) {
@@ -16968,6 +17171,106 @@ window.addEventListener('load', () => {
     select.addEventListener('change', renderTrigger);
     new MutationObserver(refresh).observe(select, { childList: true, subtree: true, attributes: true });
     refresh();
+  })();
+</script>
+<!-- ── Step 3 (Model Submission) layout: CAD in use, upload/reuse tabs, module states ── -->
+<style id="step3UiStyle">
+  .s3-card {
+    grid-column: span 12; padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--border2); background: rgba(8, 19, 33, 0.55);
+  }
+  .s3-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .s3-kicker { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
+  .s3-branch { font-size: 10px; color: #d4a72c; letter-spacing: .4px; }
+  .s3-cad-row { display: flex; align-items: center; gap: 12px; }
+  .s3-cad-main { flex: 1; min-width: 0; }
+  .s3-cad-name { font-size: 13px; color: #e9f2ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s3-cad-path { margin-top: 3px; font-size: 10.5px; color: #7d8aa3; overflow-wrap: anywhere; }
+  .s3-cad-link {
+    flex: none; padding: 6px 10px; border-radius: 7px; font-size: 11px; text-decoration: none;
+    color: var(--accent); border: 1px solid rgba(0, 212, 255, 0.3);
+  }
+  .s3-cad-link:hover { background: rgba(0, 212, 255, 0.08); }
+  .s3-cad-link[hidden], .s3-cad-pending[hidden] { display: none; }
+  .s3-cad-pending {
+    margin-top: 10px; padding: 8px 10px; border-radius: 8px; font-size: 11px; line-height: 1.6;
+    color: #ffc27a; background: rgba(255, 179, 71, 0.08); border: 1px solid rgba(255, 179, 71, 0.3);
+  }
+  .s3-tabs {
+    display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border);
+  }
+  .s3-tab {
+    padding: 7px 12px; border: 0; border-radius: 7px; cursor: pointer;
+    font: inherit; font-size: 11.5px; color: var(--text3); background: transparent;
+  }
+  .s3-tab:hover { color: #e9f2ff; }
+  .s3-tab.active { color: #e9f2ff; background: rgba(0, 212, 255, 0.14); box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.35); }
+  .s3-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .s3-pane[hidden] { display: none; }
+  .s3-advanced { grid-column: span 12; border: 1px solid var(--border); border-radius: 12px; background: rgba(8, 19, 33, 0.35); }
+  .s3-advanced > summary {
+    list-style: none; cursor: pointer; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #e9f2ff;
+  }
+  .s3-advanced > summary::-webkit-details-marker { display: none; }
+  .s3-advanced > summary::before { content: '▸'; color: var(--text3); transition: transform .15s ease; }
+  .s3-advanced[open] > summary::before { transform: rotate(90deg); }
+  .s3-summary-note { font-size: 10.5px; color: #7d8aa3; }
+  .s3-advanced-grid { padding: 0 16px 16px; }
+  .s3-advanced-grid > .form-section-title:first-child { margin-top: 0; }
+  .field label code { text-transform: none; letter-spacing: 0; font-size: 10px; color: #7d8aa3; }
+
+  #assemblyTree .module-dot, .s3-legend .module-dot {
+    display: inline-block; flex-shrink: 0; width: 10px; height: 10px; border-radius: 50%;
+    margin-right: 8px; transition: background .3s ease;
+  }
+  .s3-legend .module-dot { width: 8px; height: 8px; margin-right: 6px; vertical-align: middle; }
+  .module-dot.s3-state-published { background: #00ff9d; }
+  .module-dot.s3-state-pending   { background: #ffb347; }
+  .module-dot.s3-state-uploading { background: #ffd166; animation: s3Pulse 1s ease-in-out infinite; }
+  .module-dot.s3-state-error     { background: #ff7a8a; }
+  .module-dot.s3-state-none      { background: transparent; box-shadow: inset 0 0 0 1.5px #5b6578; }
+  @keyframes s3Pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .module-dot.s3-state-uploading { animation: none; } }
+  .tree-cad {
+    margin-top: 2px; font-size: 10px; color: #7d8aa3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tree-cad.pending { color: #ffc27a; }
+  .tree-cad.uploading { color: #ffd166; }
+  .tree-cad.error { color: #ff7a8a; }
+  .s3-legend { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 10px; color: var(--text2); }
+
+  /* SysML attributes and ports (read-only rows built by renderSysmlAttributes) */
+  #sysmlAttrs {
+    padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--border2); background: rgba(8, 19, 33, 0.35);
+  }
+  #sysmlAttrs > .form-section-title:first-child { margin-top: 0 !important; padding-top: 0; border-top: 0; }
+  #sysmlAttrs .sysml-attr-row input {
+    width: 100%; min-width: 0; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(8, 19, 33, 0.7);
+    font: inherit; font-size: 11.5px; color: #e9f2ff; opacity: 1 !important; outline: none;
+  }
+  #sysmlAttrs .sysml-attr-row input:first-child { color: #9fb0c8; }
+  #sysmlAttrs .sysml-attr-row input:last-child { color: #7d8aa3; }
+</style>
+
+<script>
+  (function step3UiInit() {
+    // Material and unit fields: keep them in the module cache as soon as they change,
+    // so the next publish writes them to the asset JSON (replaces "Save metadata").
+    ['materialSelect', 'metersPerUnit', 'upAxis', 'massUnit', 'lengthUnit'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', () => {
+        if (typeof saveModuleMeta === 'function') saveModuleMeta({ silent: true });
+      });
+    });
+
+    let savedTab = 'upload';
+    try { savedTab = sessionStorage.getItem('s3CadTab') || 'upload'; } catch {}
+    if (typeof s3SetCadTab === 'function') s3SetCadTab(savedTab);
+    if (typeof s3RenderCurrentCad === 'function') s3RenderCurrentCad();
   })();
 </script>
 </html>
