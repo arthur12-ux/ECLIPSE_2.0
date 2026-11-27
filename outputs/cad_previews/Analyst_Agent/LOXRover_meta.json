@@ -1,33 +1,838 @@
 {
-  "written_at": 1795732322528,
+  "written_at": 1795742009240,
   "module_name": "LOXRover",
-  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LOXRover/RegolithRover.usdc",
-  "usd_path": "clean_database/cad_models/Analyst_Agent/LOXRover/RegolithRover.usdc",
+  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LOXRover/Mars_2020_Perseverance_Rover.usdz",
+  "usd_path": "clean_database/cad_models/Analyst_Agent/LOXRover/Mars_2020_Perseverance_Rover.usdz",
   "glb_path": "outputs/cad_previews/Analyst_Agent/LOXRover.glb",
   "up_axis": "Z",
   "meters_per_unit": 1.0,
   "size_m": [
-    1.53,
-    2.45,
-    1.53
+    2.705,
+    3.108,
+    1.846
   ],
   "center_m": [
-    0.0,
-    0.975,
-    0.0
+    -0.0,
+    0.182,
+    0.924
   ],
-  "mesh_count": 1,
+  "mesh_count": 68,
   "materials": [
     {
-      "path": "/World/Materials/DefaultCadMaterial",
+      "path": "/root/_materials/aluminum",
       "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
         "diffuseColor": [
-          0.78,
-          0.78,
-          0.74
+          0.9647,
+          0.9647,
+          0.9647
         ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.2773,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/transparent",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.45,
         "metallic": 0.0,
-        "roughness": 0.45
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.0,
+        "file": "@./textures/clear.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/gunmetal",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.3005,
+          0.2831,
+          0.2831
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.35,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/bronze",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.5225,
+          0.3441,
+          0.2027
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.35,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_06_brass",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.45,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_06_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_01_n",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_01_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/paint_white_base",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.6525,
+          0.6525,
+          0.6921
+        ],
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_02_n",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.65,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_02_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/blades",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.45,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 1.0,
+        "specular": 0.0,
+        "file": "@./textures/blade.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_03",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_03.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/gunmetal_dark",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.0828,
+          0.0784,
+          0.0784
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.55,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/aluminum_001",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.9647,
+          0.9647,
+          0.9647
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.45,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/aluminum_black",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.0777,
+          0.0738,
+          0.0738
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.3,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_02",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.65,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_02.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/glass_lens",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.0,
+        "diffuseColor": [
+          0.4551,
+          0.6724,
+          0.5015
+        ],
+        "ior": 1.39,
+        "metallic": 0.0,
+        "opacity": 0.0,
+        "roughness": 0.005,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_05",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/grey_brushed",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.6069,
+          0.6069,
+          0.6069
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.9455,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/glass_trans",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.0,
+        "ior": 1.39,
+        "metallic": 0.0,
+        "opacity": 0.0,
+        "roughness": 0.005,
+        "specular": 0.5,
+        "file": "@./textures/glass.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/aluminum_003",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.9647,
+          0.9647,
+          0.9647
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.2773,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_03_002",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_03.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_04",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_04.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/arm_graphics",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/arm_graphics.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/glass_2",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.0,
+        "ior": 1.39,
+        "metallic": 0.0,
+        "opacity": 0.0,
+        "roughness": 0.2727,
+        "specular": 0.5,
+        "file": "@./textures/glass.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/aluminum_black_001",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.0777,
+          0.0738,
+          0.0738
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.3,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_04_001",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_04.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/black_krinkle",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.0196,
+          0.0196,
+          0.0196
+        ],
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.7318,
+        "specular": 0.5,
+        "file": "@./textures/foil_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_01",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_01.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_06",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.45,
+        "metallic": 0.25,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.1545,
+        "file": "@./textures/mars_2020_06.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/hub",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.4,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_hub_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/brass",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.2936,
+          0.2744,
+          0.1503
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.35,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_07",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.3045,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_07.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/sample_handling_door",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/sample_handling_door.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_06_n",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.45,
+        "metallic": 0.45,
+        "opacity": 1.0,
+        "roughness": 0.25,
+        "specular": 0.1545,
+        "file": "@./textures/mars_2020_06_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/spring",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.5225,
+          0.5225,
+          0.5225
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.4,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_spring_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_04_aluminum_r",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 1.0,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_04.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_05_gunmetal",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 0.8,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/gray_krinkle",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.3459,
+          0.3459,
+          0.3459
+        ],
+        "ior": 1.5,
+        "metallic": 0.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5,
+        "file": "@./textures/foil_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_gunmetal_dark",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.35,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/iron",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.4469,
+          0.4469,
+          0.4469
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_05_brass",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.45,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_05_aluminum",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.3,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/foil_orange",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.4581,
+          0.1822,
+          0.0251
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.2364,
+        "specular": 0.5,
+        "file": "@./textures/foil_n.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/Material",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.4535,
+          0.1829,
+          0.08
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.5273,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/copper",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          0.357,
+          0.1653,
+          0.1081
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/array_gold_trim",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          1.0,
+          0.7566,
+          0.2424
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.2,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/gold",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "diffuseColor": [
+          1.0,
+          0.6308,
+          0.0513
+        ],
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.5,
+        "specular": 0.5
+      }
+    },
+    {
+      "path": "/root/_materials/mars_2020_05_cooling_lines",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "opacity": 1.0,
+        "specular": 0.5,
+        "file": "@./textures/mars_2020_05_r.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
       }
     }
   ],
