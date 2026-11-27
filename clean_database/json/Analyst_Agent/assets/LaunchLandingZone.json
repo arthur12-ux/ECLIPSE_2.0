@@ -9,7 +9,7 @@
       "height": 10
     },
     "metersPerUnit": 1,
-    "upAxis": "Y",
+    "upAxis": "Z",
     "massUnit": "kg",
     "lengthUnit": "m"
   },
@@ -46,22 +46,22 @@
     "cadVolumeScaleFactor": 438.60397762
   },
   "metadata": {
-    "geometryRef": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
-    "cadFileName": "launchlandingzone.usdc",
-    "cadUploadedAt": "2026-11-27T02:11:06.082Z",
+    "geometryRef": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+    "cadFileName": "Mobile_Launcher_assembled.usdz",
+    "cadUploadedAt": "2026-11-27T02:12:08.586Z",
     "glbPreviewRef": "outputs/cad_previews/Analyst_Agent/LaunchLandingZone.glb",
-    "sourceCadPath": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
-    "cadImportedFromScenario": "CAD library",
+    "sourceCadPath": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+    "cadImportedFromScenario": "Analyst_Agent",
     "cadDetectedSizeM": {
-      "length": 5.699,
-      "width": 6.581,
-      "height": 0.244
+      "length": 1.019,
+      "width": 0.867,
+      "height": 2.464
     },
-    "cadSourceUpAxis": "Y",
+    "cadSourceUpAxis": "Z",
     "cadSourceFrontAxis": "+X",
     "cadSourceUpAxisOverride": false,
     "cadSourceFrontAxisOverride": false,
-    "cadDetectedUpAxis": "Y",
+    "cadDetectedUpAxis": "Z",
     "cadDetectedMetersPerUnit": 1
   },
   "materialRef": null,
