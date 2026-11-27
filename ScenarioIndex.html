@@ -5050,7 +5050,10 @@ async function loadSavedScenario(id) {
   if (snapshot?._sourcePath && !snapshot.scenario_logic) {
     snapshot = await loadScenarioSnapshotFromPath(snapshot._sourcePath, snapshot.scenario_slug || id) || snapshot;
   }
-  if (snapshot) restoreScenarioSnapshot(snapshot);
+  if (snapshot) {
+    restoreScenarioSnapshot(snapshot);
+    loadSavedScenarioGraph(snapshot);
+  }
   closeSavedScenarioPicker();
 }
 
@@ -9911,6 +9914,69 @@ let up42MoonImg = null;
     }
   }
 
+  // Restores the graph saved by this scenario's last Run Graph
+  // (outputs/scenarios/<slug>/graph.json), so loading a saved scenario does not
+  // require dispatching the workflow again. Applied only when the saved graph was
+  // built with the same active modules as the loaded scenario.
+  async function loadSavedScenarioGraph(snapshot) {
+    const slug = currentScenarioSlug;
+    const token = sessionStorage.getItem('gh_pat');
+    if (!slug || !token) return false;
+
+    setGraphStatus('Loading the saved graph for this scenario...', 'var(--text2)');
+    let data;
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/outputs/scenarios/${encodeURIComponent(slug)}/graph.json?ref=${encodeURIComponent(GH_REF)}&ts=${Date.now()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+          },
+          cache: 'no-store'
+        }
+      );
+      if (slug !== currentScenarioSlug) return false;
+      if (!res.ok) {
+        setGraphStatus(
+          res.status === 404
+            ? 'No saved graph for this scenario yet. Click Run Graph.'
+            : `Could not load the saved graph (GitHub ${res.status}). Click Run Graph.`,
+          '#ffd36e'
+        );
+        return false;
+      }
+      data = JSON.parse(githubContentToText(await res.json()));
+    } catch (error) {
+      console.warn('[SAVED GRAPH]', error);
+      if (slug === currentScenarioSlug) setGraphStatus('Could not load the saved graph. Click Run Graph.', '#ffd36e');
+      return false;
+    }
+
+    if (slug !== currentScenarioSlug || (data.scenario_slug && data.scenario_slug !== slug)) return false;
+
+    // Compare the node list stored in graph.json itself (getGraphActiveNodeList
+    // depends on the parts cache of the previously displayed scenario).
+    const rawGraphNodes = Array.isArray(data.active_nodes)
+      ? data.active_nodes
+      : (Array.isArray(data.active_nodes?.list) ? data.active_nodes.list : []);
+    const graphNodes = [...new Set(rawGraphNodes.filter(Boolean))].sort();
+    const expectedNodes = Array.isArray(snapshot?.active_nodes) ? [...new Set(snapshot.active_nodes)].sort() : [];
+    if (expectedNodes.length && graphNodes.join('|') !== expectedNodes.join('|')) {
+      setGraphStatus('The saved graph was built with different active modules. Click Run Graph to update it.', '#ffd36e');
+      return false;
+    }
+
+    applyGraphResult(data);
+    const writtenAt = data.written_at ? new Date(Number(data.written_at) || data.written_at) : null;
+    const when = writtenAt && !Number.isNaN(writtenAt.getTime())
+      ? writtenAt.toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+      : 'unknown date';
+    setGraphStatus(`Saved graph loaded (${when}). Run Graph again only if you changed the SysML model.`, '#7ee0b1');
+    console.log('[SAVED GRAPH] restored', slug, 'from', when);
+    return true;
+  }
+
   async function fetchGraphResult(runTimestamp) {
     const token = sessionStorage.getItem('gh_pat');
     const graphPath = currentScenarioSlug
@@ -11073,11 +11139,114 @@ let up42MoonImg = null;
     const entries = await listGithubDirectory(path);
     return entries.filter(isCadFile).map(entry => ({
       fileName: entry.name,
-      cadPath: entry.path || `${path}/${entry.name}`
+      cadPath: entry.path || `${path}/${entry.name}`,
+      sha: entry.sha || null
     }));
   }
 
+  // Fast CAD catalog: one Git Trees API call returns every file under
+  // clean_database/cad_models, instead of listing ~80 folders one by one.
+  // The tree is cached by its sha, so later refreshes only re-check that sha.
+  let cadModelsTreeCache = null; // { sha, tree }
+
+  async function fetchCadModelsTree(treeSha) {
+    const token = sessionStorage.getItem('gh_pat');
+    if (!token || !treeSha) return null;
+    if (cadModelsTreeCache?.sha === treeSha) return cadModelsTreeCache.tree;
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/trees/${treeSha}?recursive=1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json'
+          },
+          cache: 'no-store'
+        }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.truncated || !Array.isArray(data.tree)) return null;
+      cadModelsTreeCache = { sha: treeSha, tree: data.tree };
+      return data.tree;
+    } catch (error) {
+      console.warn('[fetchCadModelsTree]', error);
+      return null;
+    }
+  }
+
+  // Builds the same groups as getCadCatalogGroupsByListing() from a recursive tree.
+  function cadCatalogGroupsFromTree(tree, scenarioNames) {
+    const basePath = 'clean_database/cad_models';
+    const libraryItems = [];
+    const roots = new Map();
+    const rootOf = name => {
+      if (!roots.has(name)) roots.set(name, { directFiles: [], childFiles: [], hasChildDirs: false });
+      return roots.get(name);
+    };
+
+    for (const node of tree) {
+      const parts = String(node.path || '').split('/');
+      if (node.type === 'tree') {
+        if (parts.length === 1) rootOf(parts[0]);
+        else if (parts.length === 2) rootOf(parts[0]).hasChildDirs = true;
+        continue;
+      }
+      const fileName = parts[parts.length - 1];
+      if (node.type !== 'blob' || !CAD_FILE_EXTENSION.test(fileName)) continue;
+      const file = { fileName, cadPath: `${basePath}/${node.path}`, sha: node.sha || null };
+      if (parts.length === 1) {
+        libraryItems.push({ ...file, displayName: fileName, sourceLabel: 'CAD library', moduleName: null });
+      } else if (parts.length === 2) {
+        rootOf(parts[0]).directFiles.push(file);
+      } else if (parts.length === 3) {
+        rootOf(parts[0]).childFiles.push({ ...file, child: parts[1] });
+      }
+    }
+
+    const scenarioGroups = [];
+    for (const [rootName, root] of roots) {
+      if (rootName.startsWith('.')) continue;
+      if (scenarioNames.has(rootName) || root.hasChildDirs) {
+        const items = [
+          ...root.directFiles.map(file => ({
+            ...file, displayName: file.fileName, sourceLabel: rootName, moduleName: null
+          })),
+          ...root.childFiles.map(({ child, ...file }) => ({
+            ...file, displayName: `${child} / ${file.fileName}`, sourceLabel: rootName, moduleName: child
+          }))
+        ];
+        if (items.length) scenarioGroups.push({ label: `Scenario: ${rootName}`, items });
+        continue;
+      }
+      root.directFiles.forEach(file => libraryItems.push({
+        ...file, displayName: `${rootName} / ${file.fileName}`, sourceLabel: 'CAD library', moduleName: rootName
+      }));
+    }
+
+    return [
+      ...scenarioGroups.sort((left, right) => left.label.localeCompare(right.label)),
+      ...(libraryItems.length ? [{ label: 'CAD library: clean_database/cad_models', items: libraryItems }] : [])
+    ];
+  }
+
   async function getCadCatalogGroups() {
+    const [databaseRoot, scenarioRoot] = await Promise.all([
+      listGithubDirectory('clean_database'),
+      listGithubDirectory('clean_database/json')
+    ]);
+    const cadModelsDir = databaseRoot.find(entry => entry?.type === 'dir' && entry.name === 'cad_models');
+    const tree = await fetchCadModelsTree(cadModelsDir?.sha);
+    if (!tree) return getCadCatalogGroupsByListing();
+
+    const scenarioNames = new Set(
+      scenarioRoot.filter(entry => entry?.type === 'dir').map(entry => entry.name)
+    );
+    return cadCatalogGroupsFromTree(tree, scenarioNames);
+  }
+
+  // Slow fallback (one request per folder), used only if the tree API is unavailable.
+  async function getCadCatalogGroupsByListing() {
     const [cadRoot, scenarioRoot] = await Promise.all([
       listGithubDirectory('clean_database/cad_models'),
       listGithubDirectory('clean_database/json')
@@ -11095,7 +11264,9 @@ let up42MoonImg = null;
         fileName: entry.name,
         displayName: entry.name,
         cadPath: entry.path || `clean_database/cad_models/${entry.name}`,
-        sourceLabel: 'CAD library'
+        sourceLabel: 'CAD library',
+        moduleName: null,
+        sha: entry.sha || null
       });
     });
 
@@ -11111,7 +11282,9 @@ let up42MoonImg = null;
           fileName: entry.name,
           displayName: entry.name,
           cadPath: entry.path || `${rootPath}/${entry.name}`,
-          sourceLabel: rootEntry.name
+          sourceLabel: rootEntry.name,
+          moduleName: null,
+          sha: entry.sha || null
         }));
 
         for (const child of childDirectories) {
@@ -11121,7 +11294,8 @@ let up42MoonImg = null;
             scenarioItems.push({
               ...file,
               displayName: `${child.name} / ${file.fileName}`,
-              sourceLabel: rootEntry.name
+              sourceLabel: rootEntry.name,
+              moduleName: child.name
             });
           });
         }
@@ -11137,7 +11311,9 @@ let up42MoonImg = null;
           fileName: entry.name,
           displayName: `${rootEntry.name} / ${entry.name}`,
           cadPath: entry.path || `${rootPath}/${entry.name}`,
-          sourceLabel: 'CAD library'
+          sourceLabel: 'CAD library',
+          moduleName: rootEntry.name,
+          sha: entry.sha || null
         });
       });
     }
@@ -11148,12 +11324,21 @@ let up42MoonImg = null;
     ];
   }
 
+  // Incremented on every refresh so that only the latest one fills the list:
+  // overlapping refreshes (e.g. the same module selected twice while GitHub is
+  // still listing files) used to append their options twice.
+  let cadReuseRefreshSeq = 0;
+
   async function refreshCadReuseOptions(moduleName = currentModuleName) {
     const select = document.getElementById('cadReuseSelect');
     if (!select) return;
+    const refreshId = ++cadReuseRefreshSeq;
+    const resetOptions = () => {
+      select.innerHTML = '<option value="">Load a CAD from a scenario or the CAD library...</option>';
+      cadReuseOptions = [];
+    };
 
-    select.innerHTML = '<option value="">Load a CAD from a scenario or the CAD library...</option>';
-    cadReuseOptions = [];
+    resetOptions();
     updateCadReuseButton();
 
     if (!moduleName) {
@@ -11164,12 +11349,32 @@ let up42MoonImg = null;
     setCadReuseStatus('Loading available CAD files...');
     const groups = await getCadCatalogGroups();
 
-    if (moduleName !== currentModuleName) return;
+    if (refreshId !== cadReuseRefreshSeq || moduleName !== currentModuleName) return;
+    resetOptions();
     const rememberedPath = moduleMetaCache[moduleName]?.pendingCadCatalogPath || '';
+
+    // The same CAD is often copied into every scenario. Offer each distinct file
+    // (same git blob sha = same content) only once, preferring the CAD library copy,
+    // then the remembered selection, then the first scenario in alphabetical order.
+    const moduleCandidates = groups.flatMap(group =>
+      group.items.filter(candidate => candidate.moduleName === moduleName));
+    const rank = candidate =>
+      candidate.sourceLabel === 'CAD library' ? 0 : (candidate.cadPath === rememberedPath ? 1 : 2);
+    const keptByContent = new Map();
+    [...moduleCandidates]
+      .sort((left, right) => rank(left) - rank(right) || left.cadPath.localeCompare(right.cadPath))
+      .forEach(candidate => {
+        const key = candidate.sha || candidate.cadPath;
+        if (!keptByContent.has(key)) keptByContent.set(key, candidate);
+      });
+    const keptCandidates = new Set(keptByContent.values());
+
     groups.forEach(group => {
       const optionGroup = document.createElement('optgroup');
       optionGroup.label = group.label;
+      // Only offer CAD files stored for the selected module (e.g. habitats for HabitationModule).
       group.items
+        .filter(candidate => keptCandidates.has(candidate))
         .sort((left, right) => left.displayName.localeCompare(right.displayName))
         .forEach(candidate => {
           const option = document.createElement('option');
@@ -11189,7 +11394,7 @@ let up42MoonImg = null;
       setCadReuseStatus(
         cadReuseOptions.length
           ? `${cadReuseOptions.length} CAD file${cadReuseOptions.length === 1 ? '' : 's'} available for ${moduleName}.`
-          : 'No CAD file is available in clean_database/cad_models.'
+          : `No CAD file has been stored for ${moduleName} yet. Upload one above.`
       );
     }
     updateCadReuseButton();
@@ -16265,6 +16470,504 @@ window.addEventListener('load', () => {
         btn.textContent = 'Search';
       }
     };
+  })();
+</script>
+
+<!-- ── Mission loader: Moon + orbiting rocket shown while long GitHub workflows run ── -->
+<style id="eclLoaderStyle">
+  #eclLoader {
+    position: fixed; left: 16px; bottom: 16px; z-index: 2147482000;
+    width: 300px; padding: 10px 14px 12px;
+    background: rgba(13, 16, 24, 0.95); border: 1px solid #2a3347; border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+    color: #d4dae8; font: 12px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    opacity: 0; transform: translateY(14px); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  #eclLoader.show { opacity: 1; transform: none; pointer-events: auto; }
+  #eclLoader .ecl-head { display: flex; align-items: center; gap: 8px; }
+  #eclLoader .ecl-title { flex: 1; font-weight: 600; color: #e9f2ff; }
+  #eclLoader .ecl-time { font-variant-numeric: tabular-nums; color: #7d8aa3; }
+  #eclLoader .ecl-close {
+    background: none; border: 0; color: #7d8aa3; font-size: 16px; line-height: 1;
+    cursor: pointer; padding: 0 2px;
+  }
+  #eclLoader .ecl-close:hover { color: #e9f2ff; }
+  #eclLoader svg { display: block; width: 100%; height: auto; margin: 6px 0 4px; }
+  #eclLoader .ecl-status { min-height: 17px; color: #9fb0c8; overflow-wrap: anywhere; }
+  #eclLoader .ecl-extra { color: #7d8aa3; font-size: 11px; }
+  #eclLoader .ecl-star { fill: #cfe8ff; animation: eclTwinkle 2.4s ease-in-out infinite; }
+  #eclLoader .ecl-flame { transform-box: fill-box; transform-origin: 100% 50%; animation: eclFlame .16s ease-in-out infinite alternate; }
+  #eclLoader.done .ecl-flame, #eclLoader.done .ecl-trail { display: none; }
+  @keyframes eclTwinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+  @keyframes eclFlame { from { transform: scaleX(.75); opacity: .85; } to { transform: scaleX(1.15); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    #eclLoader .ecl-star, #eclLoader .ecl-flame { animation: none; }
+  }
+</style>
+
+<div id="eclLoader" role="status" aria-live="polite" aria-hidden="true">
+  <div class="ecl-head">
+    <span class="ecl-title" id="eclLoaderTitle">Mission in progress</span>
+    <span class="ecl-time" id="eclLoaderTime">0:00</span>
+    <button class="ecl-close" type="button" id="eclLoaderClose" title="Hide until the next run" aria-label="Hide">×</button>
+  </div>
+  <svg viewBox="0 0 280 118" aria-hidden="true">
+    <defs>
+      <radialGradient id="eclMoonFill" cx="38%" cy="35%" r="70%">
+        <stop offset="0" stop-color="#f1f3f7"/>
+        <stop offset=".65" stop-color="#b9c0cc"/>
+        <stop offset="1" stop-color="#7f8898"/>
+      </radialGradient>
+      <radialGradient id="eclMoonGlow" r="50%">
+        <stop offset=".55" stop-color="#9fd8ff" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#9fd8ff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g>
+      <circle class="ecl-star" cx="18" cy="16" r="1.2"/>
+      <circle class="ecl-star" cx="52" cy="98" r="1"   style="animation-delay:.6s"/>
+      <circle class="ecl-star" cx="84" cy="12" r="1.4" style="animation-delay:1.2s"/>
+      <circle class="ecl-star" cx="206" cy="20" r="1"  style="animation-delay:.3s"/>
+      <circle class="ecl-star" cx="246" cy="88" r="1.3" style="animation-delay:1.7s"/>
+      <circle class="ecl-star" cx="262" cy="34" r="1"  style="animation-delay:.9s"/>
+      <circle class="ecl-star" cx="30" cy="62" r=".9"  style="animation-delay:2s"/>
+      <circle class="ecl-star" cx="226" cy="108" r=".9" style="animation-delay:1.4s"/>
+      <circle class="ecl-star" cx="118" cy="108" r="1" style="animation-delay:.2s"/>
+      <circle class="ecl-star" cx="172" cy="8" r="1.1" style="animation-delay:1s"/>
+    </g>
+    <ellipse class="ecl-trail" cx="140" cy="60" rx="96" ry="40" fill="none"
+             stroke="#00d4ff" stroke-opacity=".28" stroke-width="1" stroke-dasharray="3 5"/>
+    <circle cx="140" cy="60" r="44" fill="url(#eclMoonGlow)"/>
+    <circle cx="140" cy="60" r="30" fill="url(#eclMoonFill)"/>
+    <g fill="#5d6676" fill-opacity=".35">
+      <circle cx="129" cy="50" r="6"/>
+      <circle cx="152" cy="68" r="8"/>
+      <circle cx="146" cy="46" r="3"/>
+      <circle cx="128" cy="71" r="3.5"/>
+      <circle cx="160" cy="54" r="2.5"/>
+    </g>
+    <g id="eclRocket">
+      <g transform="translate(-11 -5)">
+        <path class="ecl-flame" d="M0 5 L-9 1.8 L-6 5 L-9 8.2 Z" fill="#ffb347"/>
+        <path class="ecl-flame" d="M0 5 L-5 3.3 L-3.5 5 L-5 6.7 Z" fill="#fff3b0"/>
+        <path d="M2 0.6 L0 -2.4 L5 0.8 Z M2 9.4 L0 12.4 L5 9.2 Z" fill="#ff5d73"/>
+        <path d="M0 1.5 Q0 0 2 0 L15 0 Q21 2 23 5 Q21 8 15 10 L2 10 Q0 10 0 8.5 Z" fill="#e9f2ff"/>
+        <path d="M17 0.6 Q21 2.2 23 5 Q21 7.8 17 9.4 Z" fill="#ff5d73"/>
+        <circle cx="11" cy="5" r="2.4" fill="#00d4ff" stroke="#0b3a52" stroke-width=".8"/>
+      </g>
+      <animateMotion id="eclRocketMotion" dur="5s" repeatCount="indefinite" rotate="auto"
+                     path="M44,60 a96,40 0 1,0 192,0 a96,40 0 1,0 -192,0"/>
+    </g>
+  </svg>
+  <div class="ecl-status" id="eclLoaderStatus"></div>
+  <div class="ecl-extra" id="eclLoaderExtra"></div>
+</div>
+
+<script>
+  (function eclipseMissionLoader() {
+    // Long-running actions set their button to disabled + a busy label until the
+    // workflow finishes, fails or times out. Watching those buttons covers every
+    // end path without changing the workflow code itself.
+    const TASKS = {
+      runGraphBtn:   { title: 'Building the mission network graph', statusId: 'graphStatus' },
+      runDesBtn:     { title: 'Running the DES simulation',          statusId: 'desStatus' },
+      publishAllBtn: { title: 'Uploading and converting CAD',        statusId: 'publishStatus' },
+    };
+    const BUSY_LABEL = /^(Triggering|Submitting|Running|Publishing)\.\.\.$/;
+    const DONE_LINGER_MS = 3500;
+
+    const root = document.getElementById('eclLoader');
+    if (!root) return;
+    const titleEl = document.getElementById('eclLoaderTitle');
+    const timeEl = document.getElementById('eclLoaderTime');
+    const statusEl = document.getElementById('eclLoaderStatus');
+    const extraEl = document.getElementById('eclLoaderExtra');
+    const svg = root.querySelector('svg');
+
+    const active = new Map(); // buttonId -> start time
+    let lastTaskId = null;
+    let dismissed = false;
+    let tickTimer = null;
+    let hideTimer = null;
+
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      svg.pauseAnimations?.();
+    }
+
+    const formatElapsed = ms => {
+      const s = Math.max(0, Math.floor(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+
+    function statusText(taskId) {
+      const el = document.getElementById(TASKS[taskId].statusId);
+      return el ? { text: el.textContent.trim(), color: el.style.color || '' } : { text: '', color: '' };
+    }
+
+    function render() {
+      if (!active.size) return;
+      const current = [...active.keys()].pop();
+      lastTaskId = current;
+      titleEl.textContent = TASKS[current].title;
+      timeEl.textContent = formatElapsed(Date.now() - active.get(current));
+      const { text } = statusText(current);
+      statusEl.textContent = text;
+      statusEl.style.color = '';
+      extraEl.textContent = active.size > 1 ? `+ ${active.size - 1} other task(s) running` : '';
+    }
+
+    function show() {
+      clearTimeout(hideTimer);
+      root.classList.remove('done');
+      if (dismissed) return;
+      root.classList.add('show');
+      root.setAttribute('aria-hidden', 'false');
+      svg.unpauseAnimations?.();
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) svg.pauseAnimations?.();
+      if (!tickTimer) tickTimer = setInterval(render, 1000);
+      render();
+    }
+
+    function hide() {
+      root.classList.remove('show', 'done');
+      root.setAttribute('aria-hidden', 'true');
+      svg.pauseAnimations?.();
+    }
+
+    function finish(taskId) {
+      if (active.size) { render(); return; }
+      clearInterval(tickTimer);
+      tickTimer = null;
+      if (dismissed) { dismissed = false; return; }
+      const { text, color } = statusText(taskId);
+      root.classList.add('done');
+      svg.pauseAnimations?.();
+      const failed = /error|fail|timeout|cannot|could not/i.test(text);
+      titleEl.textContent = failed ? 'Mission aborted' : 'Mission complete';
+      statusEl.textContent = text;
+      statusEl.style.color = color;
+      extraEl.textContent = '';
+      hideTimer = setTimeout(hide, DONE_LINGER_MS);
+    }
+
+    function check(taskId) {
+      const btn = document.getElementById(taskId);
+      if (!btn) return;
+      const busy = btn.disabled && BUSY_LABEL.test(btn.textContent.trim());
+      if (busy && !active.has(taskId)) {
+        active.set(taskId, Date.now());
+        show();
+      } else if (!busy && active.has(taskId)) {
+        active.delete(taskId);
+        finish(taskId);
+      } else if (busy) {
+        render();
+      }
+    }
+
+    document.getElementById('eclLoaderClose').addEventListener('click', () => {
+      dismissed = active.size > 0;
+      clearTimeout(hideTimer);
+      hide();
+    });
+
+    for (const [taskId, task] of Object.entries(TASKS)) {
+      const btn = document.getElementById(taskId);
+      if (btn) {
+        new MutationObserver(() => check(taskId)).observe(btn, {
+          attributes: true, attributeFilter: ['disabled'],
+          childList: true, characterData: true, subtree: true,
+        });
+      }
+      const status = document.getElementById(task.statusId);
+      if (status) {
+        new MutationObserver(() => { if (active.has(taskId)) render(); })
+          .observe(status, { childList: true, characterData: true, subtree: true });
+      }
+      check(taskId);
+    }
+    hide();
+  })();
+</script>
+
+<!-- ── CAD picker: styled dropdown layered on the native #cadReuseSelect (kept as source of truth) ── -->
+<style id="cadPickerStyle">
+  #cadReuseSelect.ccp-native {
+    position: absolute !important; width: 1px !important; height: 1px !important;
+    opacity: 0 !important; pointer-events: none !important;
+  }
+  .ccp { position: relative; flex: 1; min-width: 0; font-family: var(--mono); }
+  .ccp-trigger {
+    width: 100%; min-height: 46px; display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; text-align: left; cursor: pointer; font: inherit; font-size: 12px;
+    color: var(--text); border: 1px solid rgba(153, 194, 243, 0.2); border-radius: 10px;
+    background: linear-gradient(180deg, rgba(8, 19, 33, 0.98), rgba(9, 18, 31, 0.98));
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .ccp-trigger:hover:not([disabled]) { border-color: rgba(160, 214, 255, 0.36); }
+  .ccp.open .ccp-trigger, .ccp-trigger:focus-visible {
+    outline: none; border-color: rgba(160, 214, 255, 0.46); box-shadow: 0 0 0 3px rgba(82, 183, 255, 0.12);
+  }
+  .ccp-trigger[disabled] { opacity: .55; cursor: default; }
+  .ccp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ccp-name { color: #e9f2ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ccp-name.placeholder { color: var(--text3); }
+  .ccp-sub { font-size: 10px; letter-spacing: .4px; color: #7d8aa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ccp-sub:empty { display: none; }
+  .ccp-chevron {
+    flex: none; width: 8px; height: 8px; margin: 0 4px 4px 0;
+    border-right: 1.5px solid #9fb0c8; border-bottom: 1.5px solid #9fb0c8;
+    transform: rotate(45deg); transition: transform 150ms ease, margin 150ms ease;
+  }
+  .ccp.open .ccp-chevron { transform: rotate(-135deg); margin: 4px 4px 0 0; }
+  .ccp-panel {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60; display: none;
+    background: #0d1422; border: 1px solid #2a3347; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  }
+  .ccp.up .ccp-panel { top: auto; bottom: calc(100% + 6px); }
+  .ccp.open .ccp-panel { display: block; animation: ccpIn 140ms ease-out; }
+  @keyframes ccpIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .ccp-search {
+    display: block; width: 100%; padding: 11px 12px; border: 0; border-bottom: 1px solid #1e2535;
+    background: transparent; color: var(--text); font: inherit; font-size: 12px; outline: none;
+  }
+  .ccp-search::placeholder { color: #66748c; }
+  .ccp-list { max-height: 300px; overflow-y: auto; padding: 6px; }
+  .ccp-group { padding: 9px 8px 5px; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: #7d8aa3; }
+  .ccp-opt { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; }
+  .ccp-opt.active { background: rgba(0, 212, 255, 0.10); }
+  .ccp-opt[aria-selected="true"] .ccp-name { color: var(--accent); }
+  .ccp-check { flex: none; width: 14px; text-align: center; color: var(--accent); visibility: hidden; }
+  .ccp-opt[aria-selected="true"] .ccp-check { visibility: visible; }
+  .ccp-chip {
+    flex: none; min-width: 46px; padding: 3px 6px; border-radius: 5px; border: 1px solid;
+    text-align: center; font-size: 9.5px; font-weight: 700; letter-spacing: .6px;
+  }
+  .ccp-chip[hidden] { display: none; }
+  .ccp-chip.usd  { color: #7fdcff; border-color: rgba(0, 212, 255, 0.35);  background: rgba(0, 212, 255, 0.08); }
+  .ccp-chip.step { color: #ffc27a; border-color: rgba(255, 179, 71, 0.35); background: rgba(255, 179, 71, 0.08); }
+  .ccp-chip.mesh { color: #c9a7ff; border-color: rgba(170, 130, 255, 0.35); background: rgba(170, 130, 255, 0.08); }
+  .ccp-tag {
+    flex: none; padding: 2px 7px; border-radius: 10px; font-size: 9.5px;
+    color: #7ee0b1; background: rgba(0, 255, 157, 0.08); border: 1px solid rgba(0, 255, 157, 0.25);
+  }
+  .ccp-empty { padding: 16px 10px; text-align: center; font-size: 11px; color: #7d8aa3; }
+</style>
+
+<script>
+  (function cadPickerEnhancer() {
+    const select = document.getElementById('cadReuseSelect');
+    if (!select) return;
+
+    const root = document.createElement('div');
+    root.className = 'ccp';
+    root.innerHTML = `
+      <button type="button" class="ccp-trigger" aria-haspopup="listbox" aria-expanded="false">
+        <span class="ccp-chip" hidden></span>
+        <span class="ccp-main"><span class="ccp-name"></span><span class="ccp-sub"></span></span>
+        <span class="ccp-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="ccp-panel">
+        <input class="ccp-search" type="search" placeholder="Filter by file or scenario…" aria-label="Filter CAD files">
+        <div class="ccp-list" role="listbox" aria-label="Available CAD files"></div>
+      </div>`;
+    select.insertAdjacentElement('beforebegin', root);
+    select.classList.add('ccp-native');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+
+    const trigger = root.querySelector('.ccp-trigger');
+    const triggerChip = trigger.querySelector('.ccp-chip');
+    const triggerName = trigger.querySelector('.ccp-name');
+    const triggerSub = trigger.querySelector('.ccp-sub');
+    const search = root.querySelector('.ccp-search');
+    const list = root.querySelector('.ccp-list');
+
+    let items = [];
+    let visible = [];
+    let activeIndex = -1;
+
+    const scenarioSlug = () => {
+      try { return typeof currentScenarioSlug !== 'undefined' ? currentScenarioSlug : null; } catch { return null; }
+    };
+
+    function formatOf(path) {
+      const ext = (String(path).match(/\.([a-z0-9]+)$/i) || [, ''])[1].toLowerCase();
+      const kind = /^usd[acz]?$/.test(ext) ? 'usd' : (ext === 'step' || ext === 'stp') ? 'step' : 'mesh';
+      return { label: ext.toUpperCase() || 'CAD', kind };
+    }
+
+    function readItems() {
+      const read = [];
+      for (const node of select.children) {
+        const groupLabel = node.tagName === 'OPTGROUP' ? node.label : '';
+        const options = node.tagName === 'OPTGROUP' ? [...node.children] : [node];
+        for (const option of options) {
+          if (!option.value || read.some(item => item.value === option.value)) continue;
+          const isLibrary = /^CAD library/i.test(groupLabel);
+          const source = isLibrary ? 'CAD library' : groupLabel.replace(/^Scenario:\s*/i, '');
+          read.push({
+            value: option.value,
+            file: option.value.split('/').pop(),
+            source,
+            isLibrary,
+            format: formatOf(option.value),
+          });
+        }
+      }
+      // Library defaults first, then the current scenario, then the other scenarios.
+      const slug = scenarioSlug();
+      const order = item => item.isLibrary ? 0 : (item.source === slug ? 1 : 2);
+      return read.sort((a, b) => order(a) - order(b) || a.source.localeCompare(b.source) || a.file.localeCompare(b.file));
+    }
+
+    function describeSource(item) {
+      if (item.isLibrary) return 'CAD library · default model';
+      return item.source === scenarioSlug() ? `Scenario · ${item.source} (this scenario)` : `Scenario · ${item.source}`;
+    }
+
+    function renderTrigger() {
+      const selected = items.find(item => item.value === select.value);
+      trigger.disabled = items.length === 0;
+      if (selected) {
+        triggerChip.hidden = false;
+        triggerChip.className = `ccp-chip ${selected.format.kind}`;
+        triggerChip.textContent = selected.format.label;
+        triggerName.className = 'ccp-name';
+        triggerName.textContent = selected.file;
+        triggerSub.textContent = describeSource(selected);
+      } else {
+        triggerChip.hidden = true;
+        triggerName.className = 'ccp-name placeholder';
+        triggerName.textContent = items.length
+          ? `Choose a stored CAD (${items.length} available)`
+          : 'No stored CAD for this module';
+        triggerSub.textContent = '';
+      }
+    }
+
+    function renderList() {
+      const query = search.value.trim().toLowerCase();
+      visible = items.filter(item =>
+        !query || item.file.toLowerCase().includes(query) || item.source.toLowerCase().includes(query));
+      list.textContent = '';
+      if (!visible.length) {
+        const empty = document.createElement('div');
+        empty.className = 'ccp-empty';
+        empty.textContent = items.length ? 'No CAD matches this filter.' : 'No CAD stored for this module yet.';
+        list.appendChild(empty);
+        activeIndex = -1;
+        return;
+      }
+      if (activeIndex < 0 || activeIndex >= visible.length) {
+        activeIndex = Math.max(0, visible.findIndex(item => item.value === select.value));
+      }
+      let lastGroup = null;
+      const slug = scenarioSlug();
+      visible.forEach((item, index) => {
+        const group = item.isLibrary ? 'CAD library' : 'Scenarios';
+        if (group !== lastGroup) {
+          const heading = document.createElement('div');
+          heading.className = 'ccp-group';
+          heading.textContent = group;
+          list.appendChild(heading);
+          lastGroup = group;
+        }
+        const row = document.createElement('div');
+        row.className = 'ccp-opt' + (index === activeIndex ? ' active' : '');
+        row.setAttribute('role', 'option');
+        row.setAttribute('aria-selected', String(item.value === select.value));
+        row.dataset.index = String(index);
+
+        const check = document.createElement('span');
+        check.className = 'ccp-check';
+        check.textContent = '✓';
+        const chip = document.createElement('span');
+        chip.className = `ccp-chip ${item.format.kind}`;
+        chip.textContent = item.format.label;
+        const main = document.createElement('span');
+        main.className = 'ccp-main';
+        const name = document.createElement('span');
+        name.className = 'ccp-name';
+        name.textContent = item.file;
+        const sub = document.createElement('span');
+        sub.className = 'ccp-sub';
+        sub.textContent = item.isLibrary ? 'Default model' : item.source;
+        main.append(name, sub);
+        row.append(check, chip, main);
+        if (!item.isLibrary && item.source === slug) {
+          const tag = document.createElement('span');
+          tag.className = 'ccp-tag';
+          tag.textContent = 'this scenario';
+          row.appendChild(tag);
+        }
+        row.addEventListener('mousemove', () => setActive(index, false));
+        row.addEventListener('click', () => choose(item));
+        list.appendChild(row);
+      });
+    }
+
+    function setActive(index, scroll = true) {
+      if (index === activeIndex) return;
+      activeIndex = index;
+      list.querySelectorAll('.ccp-opt').forEach(row =>
+        row.classList.toggle('active', Number(row.dataset.index) === activeIndex));
+      if (scroll) list.querySelector('.ccp-opt.active')?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function open() {
+      if (trigger.disabled || root.classList.contains('open')) return;
+      const rect = trigger.getBoundingClientRect();
+      root.classList.toggle('up', window.innerHeight - rect.bottom < 360 && rect.top > window.innerHeight - rect.bottom);
+      root.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+      search.value = '';
+      activeIndex = -1;
+      renderList();
+      search.focus();
+      list.querySelector('.ccp-opt.active')?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function close(focusTrigger = false) {
+      if (!root.classList.contains('open')) return;
+      root.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      if (focusTrigger) trigger.focus();
+    }
+
+    function choose(item) {
+      if (select.value !== item.value) {
+        select.value = item.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      renderTrigger();
+      close(true);
+    }
+
+    function refresh() {
+      items = readItems();
+      renderTrigger();
+      if (root.classList.contains('open')) renderList();
+    }
+
+    trigger.addEventListener('click', () => root.classList.contains('open') ? close() : open());
+    trigger.addEventListener('keydown', event => {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(); }
+    });
+    search.addEventListener('input', () => { activeIndex = 0; renderList(); });
+    search.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown') { event.preventDefault(); if (visible.length) setActive((activeIndex + 1) % visible.length); }
+      else if (event.key === 'ArrowUp') { event.preventDefault(); if (visible.length) setActive((activeIndex - 1 + visible.length) % visible.length); }
+      else if (event.key === 'Enter') { event.preventDefault(); if (visible[activeIndex]) choose(visible[activeIndex]); }
+      else if (event.key === 'Escape') { event.preventDefault(); close(true); }
+      else if (event.key === 'Tab') { close(); }
+    });
+    document.addEventListener('mousedown', event => { if (!root.contains(event.target)) close(); });
+    select.addEventListener('change', renderTrigger);
+    new MutationObserver(refresh).observe(select, { childList: true, subtree: true, attributes: true });
+    refresh();
   })();
 </script>
 </html>
