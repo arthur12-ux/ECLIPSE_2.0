@@ -1,0 +1,77 @@
+{
+  "written_at": 1795740269184,
+  "module_name": "HabitationModule",
+  "source_cad_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+  "usd_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+  "glb_path": "outputs/cad_previews/Analyst_Agent/HabitationModule.glb",
+  "up_axis": "Z",
+  "meters_per_unit": 1.0,
+  "size_m": [
+    656.417,
+    458.526,
+    226.418
+  ],
+  "center_m": [
+    28.071,
+    -25.059,
+    112.521
+  ],
+  "mesh_count": 1,
+  "materials": [
+    {
+      "path": "/root/_materials/lambert3SG",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.0,
+        "metallic": 1.0,
+        "opacity": 0.0,
+        "roughness": 1.0,
+        "specular": 0.0,
+        "file": "@./textures/HDU_02.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    }
+  ],
+  "source_metadata": {
+    "written_at": 1795731847703,
+    "source_file": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+    "file_name": "Habitat_Demonstration_Unit_part_2.usdz",
+    "file_extension": ".usdz",
+    "cad_format": "USDZ",
+    "file_size_bytes": 983507,
+    "converted_usd_path": "clean_database/cad_models/Analyst_Agent/HabitationModule/Habitat_Demonstration_Unit_part_2.usdz",
+    "authoring_tool": null,
+    "source_up_axis": "Z",
+    "source_front_axis": "+X",
+    "target_up_axis": "Z",
+    "orientation_correction_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "units": {
+      "unit": "metre",
+      "scale_to_m": 1.0,
+      "source": "USD stage metersPerUnit"
+    },
+    "geometry": {
+      "extraction_status": "success",
+      "surface_area_m2": 630597.8532201007,
+      "center_of_mass_m": [
+        -27.37387223840299,
+        4.221584627151323,
+        82.62139655774439
+      ],
+      "center_of_mass_source": "centroid",
+      "is_watertight": false
+    },
+    "extraction_status": {
+      "conversion": "not_required",
+      "metadata": "success"
+    }
+  }
+}

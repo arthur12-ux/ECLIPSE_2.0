@@ -1,8 +1,8 @@
 {
-  "written_at": 1794486420503,
-  "scenario_name": "ISRU_MissionV3",
-  "scenario_slug": "ISRU_MissionV3",
-  "sysml_file": "clean_database/sysml/ISRU_MissionV3.sysml",
+  "written_at": 1795740144585,
+  "scenario_name": "Analyst_Agent",
+  "scenario_slug": "Analyst_Agent",
+  "sysml_file": "clean_database/sysml/Analyst_Agent.sysml",
   "active_nodes": [
     "HabitationModule",
     "ISRUPlant",
