@@ -1,0 +1,38 @@
+{
+  "written_at": 1795745127152,
+  "source_file": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+  "file_name": "Mobile_Launcher_assembled.usdz",
+  "file_extension": ".usdz",
+  "cad_format": "USDZ",
+  "file_size_bytes": 1348621,
+  "converted_usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+  "authoring_tool": null,
+  "source_up_axis": "Z",
+  "source_front_axis": "+X",
+  "target_up_axis": "Z",
+  "orientation_correction_deg": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "units": {
+    "unit": "metre",
+    "scale_to_m": 1.0,
+    "source": "USD stage metersPerUnit"
+  },
+  "geometry": {
+    "extraction_status": "success",
+    "surface_area_m2": 10.117967835338387,
+    "center_of_mass_m": [
+      0.3067356104490125,
+      0.011506153522755318,
+      0.8169731633349595
+    ],
+    "center_of_mass_source": "centroid",
+    "is_watertight": false
+  },
+  "extraction_status": {
+    "conversion": "not_required",
+    "metadata": "success"
+  }
+}

@@ -1,51 +1,94 @@
 {
-  "written_at": "2026-11-26T22:17:23.679Z",
+  "written_at": 1795745127163,
   "module_name": "LaunchLandingZone",
-  "usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
+  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+  "usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
   "glb_path": "outputs/cad_previews/Analyst_Agent/LaunchLandingZone.glb",
-  "up_axis": "Y",
-  "meters_per_unit": 0.01,
+  "up_axis": "Z",
+  "meters_per_unit": 1.0,
   "size_m": [
-    56.991,
-    2.442,
-    65.808
+    1.019,
+    0.867,
+    2.464
   ],
   "center_m": [
-    0,
-    1.216,
-    -9.494
+    0.189,
+    -0.0,
+    1.232
   ],
   "mesh_count": 1,
   "materials": [
     {
-      "path": "/scene/Materials/material_0",
+      "path": "/root/_materials/mobilelauncher_mat",
       "properties": {
-        "emissiveColor": [
-          0,
-          0,
-          0
-        ],
-        "metallic": 0,
-        "normal": [
-          0,
-          0,
-          1
-        ],
-        "occlusion": 1,
-        "roughness": 0.6,
-        "varname": "st0",
-        "fallback": [
-          1,
-          1,
-          1,
-          1
-        ],
-        "file": "@0/material_0_baseColor.jpg@",
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.8586,
+        "specular": 0.0,
+        "file": "@./textures/mobilelauncher_d.png@",
+        "sourceColorSpace": "sRGB",
         "wrapS": "repeat",
-        "wrapT": "repeat"
+        "wrapT": "repeat",
+        "varname": "st"
+      }
+    },
+    {
+      "path": "/root/_materials/mobilelauncher_railings_mat",
+      "properties": {
+        "clearcoat": 0.0,
+        "clearcoatRoughness": 0.03,
+        "ior": 1.5,
+        "metallic": 1.0,
+        "opacity": 1.0,
+        "roughness": 0.8586,
+        "specular": 0.0,
+        "file": "@./textures/mobilelauncher_railings_d_o.png@",
+        "sourceColorSpace": "sRGB",
+        "wrapS": "repeat",
+        "wrapT": "repeat",
+        "varname": "st"
       }
     }
   ],
-  "source_cad_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/launchlandingzone.usdc",
-  "imported_from_scenario": "ECLIPSE_Project"
+  "source_metadata": {
+    "written_at": 1795745127152,
+    "source_file": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+    "file_name": "Mobile_Launcher_assembled.usdz",
+    "file_extension": ".usdz",
+    "cad_format": "USDZ",
+    "file_size_bytes": 1348621,
+    "converted_usd_path": "clean_database/cad_models/Analyst_Agent/LaunchLandingZone/Mobile_Launcher_assembled.usdz",
+    "authoring_tool": null,
+    "source_up_axis": "Z",
+    "source_front_axis": "+X",
+    "target_up_axis": "Z",
+    "orientation_correction_deg": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "units": {
+      "unit": "metre",
+      "scale_to_m": 1.0,
+      "source": "USD stage metersPerUnit"
+    },
+    "geometry": {
+      "extraction_status": "success",
+      "surface_area_m2": 10.117967835338387,
+      "center_of_mass_m": [
+        0.3067356104490125,
+        0.011506153522755318,
+        0.8169731633349595
+      ],
+      "center_of_mass_source": "centroid",
+      "is_watertight": false
+    },
+    "extraction_status": {
+      "conversion": "not_required",
+      "metadata": "success"
+    }
+  }
 }
